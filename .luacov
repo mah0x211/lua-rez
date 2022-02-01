@@ -1,0 +1,12 @@
+codefromstrings = false
+runreport = true
+deletestats = false
+modules = {
+    ['rez'] = 'rez.lua',
+    ['rez.compile'] = 'lib/compile.lua',
+    ['rez.errmap'] = 'lib/errmap.lua',
+    ['rez.newfenv'] = 'lib/newfenv.lua',
+    ['rez.nilobj'] = 'lib/nilobj.lua',
+    ['rez.parse'] = 'lib/parse.lua',
+    ['rez.seal'] = 'lib/seal.lua',
+}
