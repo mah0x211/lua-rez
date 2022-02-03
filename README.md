@@ -15,6 +15,7 @@ create new rez object.
 
 - `opts:table`
   - `curly:boolean`: change the template syntax to the curly braces style. (default `nil`)
+  - `escape:function`: a function to escape the value of a variable.
   - `env:table<string, any>`: template environment. (default `nil`)
   
 **Returns**

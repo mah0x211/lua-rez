@@ -65,12 +65,19 @@ local function break_op(expr)
     return 'break'
 end
 
-local function put_op(expr, bid)
+local function put_op(expr, bid, escfn_name)
+    if escfn_name then
+        return format('B%s[#B%s + 1] = %s(%s)', bid, bid, escfn_name, expr)
+    end
+    return format('B%s[#B%s + 1] = %s', bid, bid, expr)
+end
+
+local function text_op(expr, bid)
     return format('B%s[#B%s + 1] = %s', bid, bid, expr)
 end
 
 local OPFUNC = {
-    ['text'] = put_op,
+    ['text'] = text_op,
     ['put'] = put_op,
     ['break'] = break_op,
     ['code'] = code_op,
@@ -151,6 +158,14 @@ local function compile(label, tags, env)
     local chunk = {
         format('local function F%s(D%s) local B%s = {};', fid, did, bid),
     }
+    local escfn_name
+
+    -- rename rez.escape function
+    if env.rez.escape then
+        escfn_name = 'ESC' .. genid()
+        rawset(env, escfn_name, env.rez.escape)
+        rawset(env.rez, 'escape', nil)
+    end
 
     for i, tag in ipairs(tags) do
         local eval = OPFUNC[tag.op]
@@ -177,7 +192,7 @@ local function compile(label, tags, env)
         end
 
         -- gen code
-        local code = eval(expr, bid)
+        local code = eval(expr, bid, escfn_name)
         if ignore_after_break_op then
             code = pad .. '-- ' .. code .. ' -- ignore after break_op'
         else

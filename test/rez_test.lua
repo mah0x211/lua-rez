@@ -1,6 +1,7 @@
 require('luacov')
 local testcase = require('testcase')
 local rez = require('rez')
+local escape_html = require('rez.escape').html
 
 function testcase.new()
     -- test that create new rez object
@@ -210,6 +211,33 @@ global-nav
 sub-nav
 main-contents: hello world!
 footer]])
+
+    -- test that throws an error when invalid arguments are passed
+    local err = assert.throws(r.render, r, 123)
+    assert.match(err, 'name must be string')
+
+    err = assert.throws(r.render, r, 'foo', 'bar')
+    assert.match(err, 'data must be table')
+end
+
+function testcase.escape_ouput()
+    local r = rez.new({
+        curly = true,
+        escape = escape_html,
+        env = {
+            world = function()
+                return 'world!'
+            end,
+        },
+    })
+
+    -- test that render template
+    assert(r:add('html', [[<p>{{? $.xss }}</p>]]))
+    local res = assert(r:render('html', {
+        xss = '<script> alert("xss"); </script>',
+    }))
+    assert.equal(res,
+                 [[<p>&lt;script&gt; alert(&#34;xss&#34;); &lt;/script&gt;</p>]])
 
     -- test that throws an error when invalid arguments are passed
     local err = assert.throws(r.render, r, 123)
