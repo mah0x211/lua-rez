@@ -66,7 +66,9 @@ local function break_op(expr)
 end
 
 local function put_op(expr, bid, escfn_name)
-    if escfn_name then
+    if not expr then
+        return ''
+    elseif escfn_name then
         return format('B%s[#B%s + 1] = %s(%s)', bid, bid, escfn_name, expr)
     end
     return format('B%s[#B%s + 1] = %s', bid, bid, expr)
