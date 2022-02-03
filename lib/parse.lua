@@ -210,9 +210,6 @@ local function parse_expr(tag_suffix, tag, txt, op_tail)
     -- trim right newline character
     if sub(txt, tail - 2, tail - 2) == '-' then
         tag.trim_right = true
-        if expr_tail == tail - 2 then
-            expr_tail = expr_tail - 1
-        end
     end
 
     -- extract expression
