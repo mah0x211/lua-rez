@@ -173,3 +173,49 @@ footer]])
     assert.match(err, 'data must be table')
 end
 
+function testcase.render_curly()
+    local r = rez.new({
+        curly = true,
+        env = {
+            world = function()
+                return 'world!'
+            end,
+        },
+    })
+
+    -- test that render template
+    assert(r:add('header', [[header]]))
+    assert(r:add('footer', [[footer]]))
+    assert(r:add('layout', [[
+{{? rez.render('header') }}
+{{? $.main }}
+{{? rez.render('footer') -}}
+]]))
+    assert(r:add('nav', [[
+global-nav
+{{? $.subnav }}]]))
+    assert(r:add('subnav', [[
+sub-nav
+{{- code rez.layout('nav', 'subnav') -}}]]))
+    assert(r:add('main', [[
+{{? rez.render('subnav') }}
+main-contents: {{? $.hello }} {{? world() }}
+{{- code rez.layout('layout', 'main') }}]]))
+    local res = assert(r:render('main', {
+        hello = 'hello',
+    }))
+    assert.equal(res, [[
+header
+global-nav
+sub-nav
+main-contents: hello world!
+footer]])
+
+    -- test that throws an error when invalid arguments are passed
+    local err = assert.throws(r.render, r, 123)
+    assert.match(err, 'name must be string')
+
+    err = assert.throws(r.render, r, 'foo', 'bar')
+    assert.match(err, 'data must be table')
+end
+

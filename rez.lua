@@ -175,6 +175,7 @@ end
 --- @class Rez
 --- @field tmpl table
 --- @field callstack table
+--- @field curly boolean
 --- @field env table
 local Rez = {}
 Rez.__index = Rez
@@ -229,7 +230,7 @@ function Rez:add(name, str)
         error('str must be string', 2)
     end
 
-    local tags, err = parse(str)
+    local tags, err = parse(str, self.curly)
     if err then
         return false, err
     end
@@ -254,11 +255,14 @@ local function new(opts)
         error('opts must be table', 2)
     elseif opts.env ~= nil and type(opts.env) ~= 'table' then
         error('opts.env must be table', 2)
+    elseif opts.curly ~= nil and type(opts.curly) ~= 'boolean' then
+        error('opts.curly must be boolean', 2)
     end
 
     return setmetatable({
         tmpl = {},
         env = opts.env,
+        curly = opts.curly == true,
     }, Rez)
 end
 

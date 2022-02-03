@@ -189,19 +189,21 @@ local NO_EXPR_REQUIRED = {
 }
 
 --- parse_expr
+--- @param tag_suffix string
 --- @param tag table
 --- @param txt string
 --- @param op_tail integer
 --- @return integer pos
 --- @return string err
 --- @return table tag
-local function parse_expr(tag, txt, op_tail)
+local function parse_expr(tag_suffix, tag, txt, op_tail)
     -- parse closing characters
     local expr_head = op_tail
-    local expr_tail, tail = find(txt, '%s*%-?%?>', expr_head)
+    local expr_tail, tail = find(txt, tag_suffix, expr_head)
     if not expr_tail then
-        return nil, format("invalid tag at %d:%d: not closed by '?>'",
-                           tag.lineno, tag.linecol)
+        return nil,
+               format("invalid tag at %d:%d: not closed by '%s'", tag.lineno,
+                      tag.linecol, sub(tag_suffix, #tag_suffix - 1))
     end
     tag.tail = tail + 1
 
@@ -251,13 +253,14 @@ local CLOSE_OP_REQUIRED = {
 }
 
 --- parse_op
+--- @param tag_suffix string
 --- @param tag table
 --- @param txt string
 --- @param op_head integer
 --- @return integer pos
 --- @return string err
 --- @return table tag
-local function parse_op(tag, txt, op_head)
+local function parse_op(tag_suffix, tag, txt, op_head)
     -- parse opcode
     local op_tail = find(txt, '[^a-z]', op_head)
     if not op_tail then
@@ -290,19 +293,20 @@ local function parse_op(tag, txt, op_head)
         tag.close_op = '/' .. op
     end
 
-    return parse_expr(tag, txt, op_tail)
+    return parse_expr(tag_suffix, tag, txt, op_tail)
 end
 
 --- parse_put_op
+--- @param tag_suffix string
 --- @param tag table
 --- @param txt string
 --- @param op_head integer
 --- @return integer pos
 --- @return string err
 --- @return table tag
-local function parse_put_op(tag, txt, op_head)
+local function parse_put_op(tag_suffix, tag, txt, op_head)
     tag.op = 'put'
-    return parse_expr(tag, txt, op_head)
+    return parse_expr(tag_suffix, tag, txt, op_head)
 end
 
 local ESCAPE_TEXT_EXPR = {
@@ -313,21 +317,30 @@ local ESCAPE_TEXT_EXPR = {
 
 --- read template context
 --- @param txt string
+--- @param curly boolean
 --- @return table[] tags
 --- @return string err
-local function parse(txt)
+local function parse(txt, curly)
     if type(txt) ~= 'string' then
         error('txt must be string', 2)
+    elseif curly ~= nil and type(curly) ~= 'boolean' then
+        error('curly must be boolean', 2)
     end
 
     local tag_prefix = '<%?%?*%-?%s*/*'
+    local tag_suffix = '%s*%-?%?>'
     local len = #txt
     local tags = {}
     local open_tags = {}
     local inloop = 0
     local pos = 1
-    local head, op_head = find(txt, tag_prefix, 1)
 
+    if curly then
+        tag_prefix = '{{%?*%-?%s*/*'
+        tag_suffix = '%s*%-?}}'
+    end
+
+    local head, op_head = find(txt, tag_prefix, 1)
     while head do
         local lineno, linecol = linenocol(txt, head)
         local tail, err, tag
@@ -338,7 +351,7 @@ local function parse(txt)
                 op_head = op_head + 1
             end
 
-            tail, err, tag = parse_put_op({
+            tail, err, tag = parse_put_op(tag_suffix, {
                 trim_left = trim_left,
                 head = head,
                 lineno = lineno,
@@ -346,7 +359,7 @@ local function parse(txt)
             }, txt, op_head)
         else
             local trim_left = sub(txt, head + 2, head + 2) == '-'
-            tail, err, tag = parse_op({
+            tail, err, tag = parse_op(tag_suffix, {
                 trim_left = trim_left,
                 head = head,
                 lineno = lineno,
