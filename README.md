@@ -14,6 +14,7 @@ create new rez object.
 **Parameters**
 
 - `opts:table`
+  - `curly:boolean`: change the template syntax to the curly braces style. (default `nil`)
   - `env:table<string, any>`: template environment. (default `nil`)
   
 **Returns**
@@ -93,9 +94,11 @@ renders the template specified by `name`.
 **Example**
 
 ```lua
-local rez = require('rez').new()
+local rez = require('rez').new({
+    curly = true,
+})
 assert(rez:add('/index.html', [[
-<?? $.hello ?> <?? $.world ?>
+{{? $.hello }} {{? $.world }}
 ]]))
 local res = assert(rez:render('/index.html', {
     hello = 'Hello',
@@ -107,17 +110,24 @@ print(res)
 
 # Template Syntax
 
-the input text for a template is text in any format. `Statements` --data evaluations or control structures-- are delimited by `<?` and `?>`; all text outside statements is copied to the output unchanged. also, if specified with a hyphen (`<?-`, `-?>`), the preceding and following a newline character `\n` will be deleted.
+the input text for a template is text in any format. `Statements` --data evaluations or control structures-- are delimited by `<?` and `?>`. the delimitors can optionally be changed to the curly braces style `{{` and `}}`.
+
+all text outside statements is copied to the output unchanged.
+
+also, if specified with a hyphen (`<?-`, `-?>`), the preceding and following a newline character `\n` will be deleted.
 
 
 ## Output Statement
 
-output the result of the expression `expr`.
+To output, add a `?` character at just behind of the started delimiter `<?`, and describe the expression `expr`. 
 
 **Syntax**
 
 ```
 <?? [expr] ?>
+
+-- do not include any spaces.
+<? ? [expr] ?>
 ```
 
 
@@ -172,7 +182,6 @@ attempt to change global environment
 
 ## Conditional Statement
 
-A conditional statement starts with `<? if expr ?>` and ends with `<? /if ?>`.
 A conditional statement starts with `<? if expr ?>`, adds branches with `<? elseif expr ?>` or `<? else ?>` as needed, and ends with `<? /if ?>`.
 
 **Syntax**
