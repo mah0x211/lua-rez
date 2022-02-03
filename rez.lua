@@ -168,6 +168,11 @@ local function new_env(rez)
             return rez_layout(rez, name, varname)
         end,
     }
+    -- add rez.escape function to escape the output strings
+    if type(rez.escape) == 'function' then
+        -- this function will be renamed by compiler
+        fenv.rez.escape = rez.escape
+    end
 
     return seal(fenv)
 end
@@ -176,6 +181,7 @@ end
 --- @field tmpl table
 --- @field callstack table
 --- @field curly boolean
+--- @field escape function
 --- @field env table
 local Rez = {}
 Rez.__index = Rez
@@ -257,12 +263,15 @@ local function new(opts)
         error('opts.env must be table', 2)
     elseif opts.curly ~= nil and type(opts.curly) ~= 'boolean' then
         error('opts.curly must be boolean', 2)
+    elseif opts.escape ~= nil and type(opts.escape) ~= 'function' then
+        error('opts.escape must be function', 2)
     end
 
     return setmetatable({
         tmpl = {},
         env = opts.env,
         curly = opts.curly == true,
+        escape = opts.escape,
     }, Rez)
 end
 
