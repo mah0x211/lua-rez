@@ -122,13 +122,21 @@ also, if specified with a hyphen (`<?-`, `-?>`), the preceding and following a n
 
 To output, add a `?` character at just behind of the started delimiter `<?`, and describe the expression `expr`. 
 
+If you need to disable escaping of the value, add an additional `=` character.
+
 **Syntax**
 
 ```
 <?? [expr] ?>
 
+-- output a raw value
+<??= [expr] ?>
+
 -- do not include any spaces.
 <? ? [expr] ?>
+
+-- combine with newline removal syntax
+<??=- [expr] -?>
 ```
 
 

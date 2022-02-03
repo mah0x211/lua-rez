@@ -232,12 +232,15 @@ function testcase.escape_ouput()
     })
 
     -- test that render template
-    assert(r:add('html', [[<p>{{? $.xss }}</p>]]))
-    local res = assert(r:render('html', {
+    assert(r:add('escape', [[<p>
+{{?- $.xss }}
+{{?=- $.no_escape }}</p>]]))
+    local res = assert(r:render('escape', {
         xss = '<script> alert("xss"); </script>',
+        no_escape = '<hello>',
     }))
     assert.equal(res,
-                 [[<p>&lt;script&gt; alert(&#34;xss&#34;); &lt;/script&gt;</p>]])
+                 [[<p>&lt;script&gt; alert(&#34;xss&#34;); &lt;/script&gt;<hello></p>]])
 
     -- test that throws an error when invalid arguments are passed
     local err = assert.throws(r.render, r, 123)

@@ -210,9 +210,6 @@ local function parse_expr(tag_suffix, tag, txt, op_tail)
     -- trim right newline character
     if sub(txt, tail - 2, tail - 2) == '-' then
         tag.trim_right = true
-        if expr_tail == tail - 2 then
-            expr_tail = expr_tail - 1
-        end
     end
 
     -- extract expression
@@ -327,8 +324,10 @@ local function parse(txt, curly)
         error('curly must be boolean', 2)
     end
 
-    local tag_prefix = '<%?%?*%-?%s*/*'
-    local tag_suffix = '%s*%-?%?>'
+    local prefix = '%?*=*%-?%s*/*'
+    local suffix = '%s*%-?'
+    local tag_prefix = '<%?' .. prefix
+    local tag_suffix = suffix .. '%?>'
     local len = #txt
     local tags = {}
     local open_tags = {}
@@ -336,8 +335,8 @@ local function parse(txt, curly)
     local pos = 1
 
     if curly then
-        tag_prefix = '{{%?*%-?%s*/*'
-        tag_suffix = '%s*%-?}}'
+        tag_prefix = '{{' .. prefix
+        tag_suffix = suffix .. '}}'
     end
 
     local head, op_head = find(txt, tag_prefix, 1)
@@ -346,13 +345,23 @@ local function parse(txt, curly)
         local tail, err, tag
 
         if sub(txt, head + 2, head + 2) == '?' then
-            local trim_left = sub(txt, head + 3, head + 3) == '-'
+            local no_escape = sub(txt, head + 3, head + 3) == '='
+
+            local trim_left
+            if no_escape then
+                trim_left = sub(txt, head + 4, head + 4) == '-'
+            else
+                trim_left = sub(txt, head + 3, head + 3) == '-'
+            end
+
+            -- skip SP / '-' / '=' / '?'
             if sub(txt, op_head, op_head) ~= '/' then
                 op_head = op_head + 1
             end
 
             tail, err, tag = parse_put_op(tag_suffix, {
                 trim_left = trim_left,
+                no_escape = no_escape,
                 head = head,
                 lineno = lineno,
                 linecol = linecol,

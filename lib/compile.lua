@@ -65,8 +65,10 @@ local function break_op(expr)
     return 'break'
 end
 
-local function put_op(expr, bid, escfn_name)
-    if escfn_name then
+local function put_op(expr, bid, escfn_name, no_escape)
+    if not expr then
+        return ''
+    elseif not no_escape and escfn_name then
         return format('B%s[#B%s + 1] = %s(%s)', bid, bid, escfn_name, expr)
     end
     return format('B%s[#B%s + 1] = %s', bid, bid, expr)
@@ -192,7 +194,7 @@ local function compile(label, tags, env)
         end
 
         -- gen code
-        local code = eval(expr, bid, escfn_name)
+        local code = eval(expr, bid, escfn_name, tag.no_escape)
         if ignore_after_break_op then
             code = pad .. '-- ' .. code .. ' -- ignore after break_op'
         else
