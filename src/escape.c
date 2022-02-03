@@ -22,27 +22,56 @@
 
 #include "rez.h"
 
-static int concat_lua(lua_State *L)
+static int html_lua(lua_State *L)
 {
+    size_t len         = 0;
+    unsigned char *str = NULL;
     luaL_Buffer b;
-    size_t last = 0;
 
-    luaL_checktype(L, 1, LUA_TTABLE);
+    if (lua_isnoneornil(L, 1)) {
+        lua_pushnil(L);
+        return 1;
+    }
     lua_settop(L, 1);
-    last = (size_t)rawlen(L, 1);
-    luaL_buffinit(L, &b);
+    tostring(L, 1);
 
-    for (size_t i = 1; i <= last; i++) {
-        lua_rawgeti(L, 1, i);
-        tostring(L, 3);
-        luaL_addvalue(&b);
+    str = (unsigned char *)lua_tolstring(L, 1, &len);
+    luaL_buffinit(L, &b);
+    for (size_t i = 0; i < len; i++) {
+        switch (str[i]) {
+        case 0:
+            luaL_addstring(&b, "\uFFFD");
+            break;
+        case '"':
+            luaL_addstring(&b, "&#34;");
+            break;
+        case '\'':
+            luaL_addstring(&b, "&#39;");
+            break;
+        case '&':
+            luaL_addstring(&b, "&amp;");
+            break;
+        case '<':
+            luaL_addstring(&b, "&lt;");
+            break;
+        case '>':
+            luaL_addstring(&b, "&gt;");
+            break;
+
+        default:
+            luaL_addchar(&b, str[i]);
+            break;
+        }
     }
     luaL_pushresult(&b);
     return 1;
 }
 
-LUALIB_API int luaopen_rez_concat(lua_State *L)
+LUALIB_API int luaopen_rez_escape(lua_State *L)
 {
-    lua_pushcfunction(L, concat_lua);
+    lua_createtable(L, 0, 1);
+    lua_pushcfunction(L, html_lua);
+    lua_setfield(L, -2, "html");
+
     return 1;
 }

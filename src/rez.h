@@ -20,29 +20,60 @@
  *  IN THE SOFTWARE.
  */
 
-#include "rez.h"
+#ifndef rez_h
+#define rez_h
 
-static int concat_lua(lua_State *L)
+#include <lauxlib.h>
+#include <lua.h>
+
+#if LUA_VERSION_NUM >= 502
+# define rawlen(L, idx) lua_rawlen(L, idx)
+#else
+# define rawlen(L, idx) lua_objlen(L, idx)
+#endif
+
+static inline void tostring(lua_State* L, int idx)
 {
-    luaL_Buffer b;
-    size_t last = 0;
+    int type = 0;
 
-    luaL_checktype(L, 1, LUA_TTABLE);
-    lua_settop(L, 1);
-    last = (size_t)rawlen(L, 1);
-    luaL_buffinit(L, &b);
-
-    for (size_t i = 1; i <= last; i++) {
-        lua_rawgeti(L, 1, i);
-        tostring(L, 3);
-        luaL_addvalue(&b);
+    if (luaL_callmeta(L, idx, "__tostring")) {
+        lua_replace(L, idx);
     }
-    luaL_pushresult(&b);
-    return 1;
+
+    type = lua_type(L, idx);
+    switch (type) {
+    case LUA_TSTRING:
+        break;
+
+    case LUA_TNIL:
+        lua_pushliteral(L, "nil");
+        lua_replace(L, idx);
+        break;
+
+    case LUA_TNUMBER:
+        lua_tostring(L, idx);
+        break;
+
+    case LUA_TBOOLEAN:
+        if (lua_toboolean(L, idx)) {
+            lua_pushliteral(L, "true");
+        } else {
+            lua_pushliteral(L, "false");
+        }
+        lua_replace(L, idx);
+        break;
+
+    // case LUA_TTABLE:
+    // case LUA_TFUNCTION:
+    // case LUA_TTHREAD:
+    // case LUA_TUSERDATA:
+    // case LUA_TLIGHTUSERDATA:
+    default:
+        lua_pushfstring(L, "%s: %p", lua_typename(L, type),
+                        lua_topointer(L, idx));
+        lua_replace(L, idx);
+        break;
+    }
 }
 
-LUALIB_API int luaopen_rez_concat(lua_State *L)
-{
-    lua_pushcfunction(L, concat_lua);
-    return 1;
-}
+#endif

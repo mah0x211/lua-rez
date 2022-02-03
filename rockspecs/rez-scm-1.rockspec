@@ -26,6 +26,9 @@ build = {
         ["rez.concat"] = {
             sources = { "src/concat.c" }
         },
+        ["rez.escape"] = {
+            sources = { "src/escape.c" }
+        },
     }
 }
 
