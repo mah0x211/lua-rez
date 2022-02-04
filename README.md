@@ -7,6 +7,13 @@
 A simple template engine for lua.
 
 
+## Installation
+
+```
+luarocks install rez
+```
+
+
 ## r = rez.new( [opts] )
 
 create new rez object.
