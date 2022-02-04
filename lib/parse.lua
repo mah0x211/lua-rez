@@ -326,17 +326,17 @@ local function parse(txt, curly)
 
     local prefix = '%?*=*%-?%s*/*'
     local suffix = '%s*%-?'
-    local tag_prefix = '<%?' .. prefix
-    local tag_suffix = suffix .. '%?>'
+    local tag_prefix = '{{' .. prefix
+    local tag_suffix = suffix .. '}}'
     local len = #txt
     local tags = {}
     local open_tags = {}
     local inloop = 0
     local pos = 1
 
-    if curly then
-        tag_prefix = '{{' .. prefix
-        tag_suffix = suffix .. '}}'
+    if curly == false then
+        tag_prefix = '<%?' .. prefix
+        tag_suffix = suffix .. '%?>'
     end
 
     local head, op_head = find(txt, tag_prefix, 1)
