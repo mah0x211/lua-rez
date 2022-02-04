@@ -258,6 +258,19 @@ local CLOSE_OP_REQUIRED = {
 --- @return string err
 --- @return table tag
 local function parse_op(tag_suffix, tag, txt, op_head)
+    -- parse a put opcode
+    if not tag.end_op and sub(txt, op_head, op_head) == '?' then
+        local op_tail = op_head + 1
+
+        tag.op = 'put'
+        if sub(txt, op_head + 1, op_head + 1) == '=' then
+            tag.no_escape = true
+            op_tail = op_tail + 1
+        end
+
+        return parse_expr(tag_suffix, tag, txt, op_tail)
+    end
+
     -- parse opcode
     local op_tail = find(txt, '[^a-z]', op_head)
     if not op_tail then
@@ -293,19 +306,6 @@ local function parse_op(tag_suffix, tag, txt, op_head)
     return parse_expr(tag_suffix, tag, txt, op_tail)
 end
 
---- parse_put_op
---- @param tag_suffix string
---- @param tag table
---- @param txt string
---- @param op_head integer
---- @return integer pos
---- @return string err
---- @return table tag
-local function parse_put_op(tag_suffix, tag, txt, op_head)
-    tag.op = 'put'
-    return parse_expr(tag_suffix, tag, txt, op_head)
-end
-
 local ESCAPE_TEXT_EXPR = {
     ['\n'] = '\\n',
     ['\''] = '\\\'',
@@ -324,7 +324,7 @@ local function parse(txt, curly)
         error('curly must be boolean', 2)
     end
 
-    local prefix = '%?*=*%-?%s*/*'
+    local prefix = '%-?%s*/*'
     local suffix = '%s*%-?'
     local tag_prefix = '{{' .. prefix
     local tag_suffix = suffix .. '}}'
@@ -341,41 +341,15 @@ local function parse(txt, curly)
 
     local head, op_head = find(txt, tag_prefix, 1)
     while head do
+        local trim_left = sub(txt, head + 2, head + 2) == '-'
         local lineno, linecol = linenocol(txt, head)
-        local tail, err, tag
-
-        if sub(txt, head + 2, head + 2) == '?' then
-            local no_escape = sub(txt, head + 3, head + 3) == '='
-
-            local trim_left
-            if no_escape then
-                trim_left = sub(txt, head + 4, head + 4) == '-'
-            else
-                trim_left = sub(txt, head + 3, head + 3) == '-'
-            end
-
-            -- skip SP / '-' / '=' / '?'
-            if sub(txt, op_head, op_head) ~= '/' then
-                op_head = op_head + 1
-            end
-
-            tail, err, tag = parse_put_op(tag_suffix, {
-                trim_left = trim_left,
-                no_escape = no_escape,
-                head = head,
-                lineno = lineno,
-                linecol = linecol,
-            }, txt, op_head)
-        else
-            local trim_left = sub(txt, head + 2, head + 2) == '-'
-            tail, err, tag = parse_op(tag_suffix, {
-                trim_left = trim_left,
-                head = head,
-                lineno = lineno,
-                linecol = linecol,
-                end_op = sub(txt, op_head, op_head) == '/' or nil,
-            }, txt, op_head + 1)
-        end
+        local tail, err, tag = parse_op(tag_suffix, {
+            trim_left = trim_left,
+            head = head,
+            lineno = lineno,
+            linecol = linecol,
+            end_op = sub(txt, op_head, op_head) == '/' or nil,
+        }, txt, op_head + 1)
 
         if err then
             return nil, err
