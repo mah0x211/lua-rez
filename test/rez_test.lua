@@ -232,8 +232,8 @@ function testcase.escape_ouput()
 
     -- test that render template
     assert(r:add('escape', [[<p>
-{{?- $.xss }}
-{{?=- $.no_escape }}</p>]]))
+{{- ? $.xss }}
+{{- ?= $.no_escape }}</p>]]))
     local res = assert(r:render('escape', {
         xss = '<script> alert("xss"); </script>',
         no_escape = '<hello>',

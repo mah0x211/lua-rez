@@ -162,16 +162,16 @@ If you need to disable escaping of the value, add an additional `=` character.
 **Syntax**
 
 ```
-{{? [expr] }}
-
--- output a raw value
-{{?= [expr] }}
-
--- do not include any spaces.
 {{ ? [expr] }}
 
+-- output a raw value
+{{ ?= [expr] }}
+
+-- do not include any spaces.
+{{ ? = [expr] }}
+
 -- combine with newline removal syntax
-{{?=- [expr] -}}
+{{- ?= [expr] -}}
 ```
 
 
