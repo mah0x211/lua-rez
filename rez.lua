@@ -270,7 +270,7 @@ local function new(opts)
     return setmetatable({
         tmpl = {},
         env = opts.env,
-        curly = opts.curly == true,
+        curly = opts.curly,
         escape = opts.escape,
     }, Rez)
 end

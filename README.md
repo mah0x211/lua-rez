@@ -14,9 +14,9 @@ create new rez object.
 **Parameters**
 
 - `opts:table`
-  - `curly:boolean`: change the template syntax to the curly braces style. (default `nil`)
+  - `curly:boolean`: sets `false` to change the template syntax to the non-curly braces style.
   - `escape:function`: a function to escape the value of a variable.
-  - `env:table<string, any>`: template environment. (default `nil`)
+  - `env:table<string, any>`: template environment.
   
 **Returns**
 
@@ -55,7 +55,7 @@ add the template `str` and set the name `name`.
 
 ```lua
 local rez = require('rez').new()
-assert(rez:add('/index.html', '<?? "hello world" ?>' ))
+assert(rez:add('/index.html', '{{? "hello world" }}' ))
 ```
 
 ## ok = r:del( name )
@@ -74,7 +74,7 @@ deletes the template with the specified `name`.
 
 ```lua
 local rez = require('rez').new()
-assert(rez:add('/index.html', '<?? "hello world" ?>'))
+assert(rez:add('/index.html', '{{? "hello world" }}'))
 assert(rez:del('/index.html'))
 ```
 
@@ -95,9 +95,7 @@ renders the template specified by `name`.
 **Example**
 
 ```lua
-local rez = require('rez').new({
-    curly = true,
-})
+local rez = require('rez').new()
 assert(rez:add('/index.html', [[
 {{? $.hello }} {{? $.world }}
 ]]))
@@ -111,41 +109,41 @@ print(res)
 
 # Template Syntax
 
-the input text for a template is text in any format. `Statements` --data evaluations or control structures-- are delimited by `<?` and `?>`. the delimitors can optionally be changed to the curly braces style `{{` and `}}`.
+the input text for a template is text in any format. `Statements` --data evaluations or control structures-- are delimited by `{{` and `}}`. the delimitors can optionally be changed to the non-curly braces style `<?` and `?>`.
 
 all text outside statements is copied to the output unchanged.
 
-also, if specified with a hyphen (`<?-`, `-?>`), the preceding and following a newline character `\n` will be deleted.
+also, if specified with a hyphen (`{{-`, `-}}`), the preceding and following a newline character `\n` will be deleted.
 
 
 ## Output Statement
 
-To output, add a `?` character at just behind of the started delimiter `<?`, and describe the expression `expr`. 
+To output, add a `?` character at just behind of the started delimiter `{{`, and describe the expression `expr`. 
 
 If you need to disable escaping of the value, add an additional `=` character.
 
 **Syntax**
 
 ```
-<?? [expr] ?>
+{{? [expr] }}
 
 -- output a raw value
-<??= [expr] ?>
+{{?= [expr] }}
 
 -- do not include any spaces.
-<? ? [expr] ?>
+{{ ? [expr] }}
 
 -- combine with newline removal syntax
-<??=- [expr] -?>
+{{?=- [expr] -}}
 ```
 
 
 **Example**
 
 ```
-<?? 'Hello World' ?>
-<?? 1 + 10 ?>
-<?? 'Hello', 'World' ?>
+{{? 'Hello World' }}
+{{? 1 + 10 }}
+{{? 'Hello', 'World' }}
 ```
 
 the above template will be rendered as follows.
@@ -164,22 +162,22 @@ you can write Lua code other than control statements.
 **Syntax**
 
 ```
-<? code [expr] ?>
+{{ code [expr] }}
 ```
 
 **Example**
 
 ```
-<?code local x = 1 ?>
-<?code local y = { 1, 2, 3 } ?>
-<?code local z = table.concat( y, '-' ) ?>
-<?code local a = 1; x = z ?>
+{{code local x = 1 }}
+{{code local y = { 1, 2, 3 } }}
+{{code local z = table.concat( y, '-' ) }}
+{{code local a = 1; x = z }}
 ```
 
 **NOTE:** you cannot declare a global variable.
 
 ```
-<?code hello = 'world' ?>
+{{code hello = 'world' }}
 ```
 
 the above template will be error occurred as follows.
@@ -191,32 +189,32 @@ attempt to change global environment
 
 ## Conditional Statement
 
-A conditional statement starts with `<? if expr ?>`, adds branches with `<? elseif expr ?>` or `<? else ?>` as needed, and ends with `<? /if ?>`.
+A conditional statement starts with `{{ if expr }}`, adds branches with `{{ elseif expr }}` or `{{ else }}` as needed, and ends with `{{ /if }}`.
 
 **Syntax**
 
 ```
-<?if expr ?> 
+{{if expr }}
 ... 
-<?elseif expr ?>
+{{elseif expr }}
 .. 
-<?else?> 
+{{else}}
 ...
-<?/if?>
+{{/if}}
 ```
 
 
 **Exampl**
 
 ```
-<? code local x = 3 >
-<? if x == 1 ?>
+{{ code local x = 3 }}
+{{ if x == 1 }}
 x is 1
-<? elseif x == 2 ?>
+{{ elseif x == 2 }}
 x is 2
-<? else ?>
-x is <?? x ?>
-<? /if ?>
+{{ else }}
+x is {{? x }}
+{{ /if }}
 ```
 
 the above template will be rendered as follows.
@@ -228,52 +226,52 @@ x is 3
 
 ## Iteration statements
 
-`<? for expr ?>`, `<? while expr ?>` and `<? break [expr] ?>` statements are can be used for the iteration statement.
+`{{ for expr }}`, `{{ while expr }}` and `{{ break [expr] }}` statements are can be used for the iteration statement.
 
 **Syntax**
 
 ```
-<? for expr ?>
+{{ for expr }}
 ...
-<? break [expr] ?>
+{{ break [expr] }}
 ...
-<? /for ?>
+{{ /for }}
 ```
 
 ```
-<? while expr ?>
+{{ while expr }}
 ...
-<? break [expr] ?>
+{{ break [expr] }}
 ...
-<? /while ?>
+{{ /while }}
 ```
 
 
 **Example**
 
 ```
-<? for i = 1, 20, 2 ?>
-<? break i >= 10 ?>
-i = <?? i ?>
-<? /for ?>
+{{ for i = 1, 20, 2 }}
+{{ break i >= 10 }}
+i = {{? i }}
+{{ /for }}
 ```
 
 ```
-<?code local i = 1 ?>
-<? while i <= 20 ?>
-i = <?? i ?>
-<?code i = i + 2 ?>
-<? break i >= 10 ?>
-<? /while ?>
+{{code local i = 1 }}
+{{ while i <= 20 }}
+i = {{? i }}
+{{code i = i + 2 }}
+{{ break i >= 10 }}
+{{ /while }}
 ```
 
 ```
-<?code local i = 1 ?>
-<? while i <= 20 ?>
-i = <?? i ?>
-<?code i = i + 2 ?>
-<? if i >= 10 ?><? break ?><? /if ?>
-<? /while ?>
+{{code local i = 1 }}
+{{ while i <= 20 }}
+i = {{? i }}
+{{code i = i + 2 }}
+{{ if i >= 10 }}{{ break }}{{ /if }}
+{{ /while }}
 ```
 
 the above templates will be rendered as follows.
@@ -309,7 +307,7 @@ renders the template specified by `name`. also, external data will be passed ove
 **Example**
 
 ```
-<?? rez.render('other_template_name') ?>
+{{? rez.render('other_template_name') }}
 ```
 
 ## rez.layout( name, varname )
@@ -330,13 +328,13 @@ local rez = require('rez').new()
 -- add layout template
 rez:add('my-layout', [[
 Hello My Layout
-<?? $.contents ?>
+{{? $.contents }}
 ]])
 
 -- add main-contents template
 rez:add('main-contents', [[
 this is main contents
-<?code rez.layout('my-layout', 'contents') ?>
+{{code rez.layout('my-layout', 'contents') }}
 ]])
 
 -- render main-contents
@@ -360,7 +358,7 @@ local rez = require('rez').new()
 -- add layout template
 rez:add('my-layout', [[
 Hello My Layout
-<?? $.contents ?>
+{{? $.contents }}
 ]])
 
 -- add main-contents template
