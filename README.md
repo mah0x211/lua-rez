@@ -106,6 +106,36 @@ local res = assert(rez:render('/index.html', {
 print(res)
 ```
 
+## Helper Functions
+
+### str = rez.escape.html( str )
+
+escapes the following characters.
+
+- `\000`: `\uFFFD`
+- `"`: `&#34;`
+- `'`: `&#39;`
+- `&`: `&amp;`
+- `<`: `&lt;`
+- `>`: `&gt;`
+
+this function can be passed to the `escape` option of `rez.new(opts)`.
+
+**Parameters**
+
+- `str:string|nil`: target string.
+
+**Returns**
+
+- `str:string|nil`: a escaped string, or `nil` if `str` is `nil`.
+
+**Example**
+
+```lua
+local escape = require('rez.escape')
+print(escape.html('<hello>')) -- &lt;hello&gt;
+```
+
 
 # Template Syntax
 
