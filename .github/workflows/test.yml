@@ -51,6 +51,7 @@ jobs:
       run: |
         luarocks install testcase
         luarocks install luacov
+        luarocks install chronos
     -
       name: Install
       run: |
@@ -59,6 +60,10 @@ jobs:
       name: Run Test
       run: |
         testcase --coverage ./test/
+    -
+      name: Run Benchmark
+      run: |
+        testcase ./benchmark/
     -
       name: Coveralls
       continue-on-error: true
