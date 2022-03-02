@@ -2,7 +2,7 @@
 
 
 [![test](https://github.com/mah0x211/lua-rez/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-rez/actions/workflows/test.yml)
-[![Coverage Status](https://coveralls.io/repos/github/mah0x211/lua-rez/badge.svg?branch=master)](https://coveralls.io/github/mah0x211/lua-rez?branch=master)
+[![codecov](https://codecov.io/gh/mah0x211/lua-rez/branch/master/graph/badge.svg)](https://codecov.io/gh/mah0x211/lua-rez)
 
 A simple template engine for lua.
 
