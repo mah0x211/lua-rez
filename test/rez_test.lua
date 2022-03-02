@@ -12,6 +12,21 @@ function testcase.new()
     assert.match(err, 'opts must be table')
 
     err = assert.throws(rez.new, {
+        curly = 'foo',
+    })
+    assert.match(err, 'opts.curly must be boolean')
+
+    err = assert.throws(rez.new, {
+        escape = 'foo',
+    })
+    assert.match(err, 'opts.escape must be callable')
+
+    err = assert.throws(rez.new, {
+        loader = {},
+    })
+    assert.match(err, 'opts.loader must be callable')
+
+    err = assert.throws(rez.new, {
         env = 'foo',
     })
     assert.match(err, 'opts.env must be table')
@@ -125,7 +140,7 @@ function testcase.del()
     assert.is_false(r:del('hello'))
 
     -- test that throws an error when invalid arguments are passed
-    local err = assert.throws(r.render, r, 123)
+    local err = assert.throws(r.del, r, 123)
     assert.match(err, 'name must be string')
 end
 
@@ -249,3 +264,53 @@ function testcase.escape_ouput()
     assert.match(err, 'data must be table')
 end
 
+function testcase.render_with_loader()
+    local r = rez.new({
+        loader = setmetatable({}, {
+            __call = function(_, r, name)
+                if name == 'header' then
+                    return r:add('header', [[header]])
+                elseif name == 'footer' then
+                    return r:add('footer', [[footer]])
+                elseif name == 'layout' then
+                    return r:add('layout', [[
+{{? rez.render('header') }}
+{{? $.main }}
+{{? rez.render('footer') -}}
+]])
+                elseif name == 'nav' then
+                    return r:add('nav', [[
+global-nav
+{{? $.subnav }}]])
+                elseif name == 'subnav' then
+                    return r:add('subnav', [[
+sub-nav
+{{- code rez.layout('nav', 'subnav') -}}]])
+                elseif name == 'main' then
+                    return r:add('main', [[
+{{? rez.render('subnav') }}
+main-contents: {{? $.hello }} {{? world() }}
+{{- code rez.layout('layout', 'main') }}]])
+                else
+                    return false, 'not found'
+                end
+            end,
+        }),
+        env = {
+            world = function()
+                return 'world!'
+            end,
+        },
+    })
+
+    -- test that render template
+    local res = assert(r:render('main', {
+        hello = 'hello',
+    }))
+    assert.equal(res, [[
+header
+global-nav
+sub-nav
+main-contents: hello world!
+footer]])
+end

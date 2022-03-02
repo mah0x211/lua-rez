@@ -22,8 +22,17 @@ create new rez object.
 
 - `opts:table`
   - `curly:boolean`: sets `false` to change the template syntax to the non-curly braces style.
-  - `escape:function`: a function to escape the value of a variable.
   - `env:table<string, any>`: template environment.
+  - `escape:function`: a function to escape the value of a variable.
+    ```
+    -- function signature
+    s:string = escape(s:string)
+    ```
+  - `loader:function`: a function to dynamically load the associated template.
+    ```
+    -- function signature
+    ok:boolean, err:string = loader(rez:Rez, name:string)
+    ```
   
 **Returns**
 
