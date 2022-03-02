@@ -2,7 +2,7 @@
 
 
 [![test](https://github.com/mah0x211/lua-rez/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-rez/actions/workflows/test.yml)
-[![Coverage Status](https://coveralls.io/repos/github/mah0x211/lua-rez/badge.svg?branch=master)](https://coveralls.io/github/mah0x211/lua-rez?branch=master)
+[![codecov](https://codecov.io/gh/mah0x211/lua-rez/branch/master/graph/badge.svg)](https://codecov.io/gh/mah0x211/lua-rez)
 
 A simple template engine for lua.
 
@@ -22,8 +22,17 @@ create new rez object.
 
 - `opts:table`
   - `curly:boolean`: sets `false` to change the template syntax to the non-curly braces style.
-  - `escape:function`: a function to escape the value of a variable.
   - `env:table<string, any>`: template environment.
+  - `escape:function`: a function to escape the value of a variable.
+    ```
+    -- function signature
+    s:string = escape(s:string)
+    ```
+  - `loader:function`: a function to dynamically load the associated template.
+    ```
+    -- function signature
+    ok:boolean, err:string = loader(rez:Rez, name:string)
+    ```
   
 **Returns**
 

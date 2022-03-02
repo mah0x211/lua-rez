@@ -22,6 +22,7 @@
 local error = error
 local format = string.format
 local next = next
+local getmetatable = debug.getmetatable
 local setmetatable = setmetatable
 local type = type
 local pairs = pairs
@@ -36,6 +37,13 @@ local concat = require('rez.concat')
 local nilobj_enable = nilobj.enable
 local nilobj_disable = nilobj.disable
 
+--- default_loader
+--- @return boolean ok
+--- @return string err
+local function DEFAULT_LOADER()
+    return false
+end
+
 --- render
 --- @param rez Rez
 --- @param name string
@@ -45,7 +53,16 @@ local function render(rez, name)
     -- get target template
     local target = rez.tmpl[name]
     if not target then
-        return nil, format('template %q not found', name)
+        local ok, err = rez.loader(rez, name)
+        if ok then
+            target = rez.tmpl[name]
+        elseif err then
+            error(format('cannot load template %q %s', name, err), 2)
+        end
+
+        if not target then
+            return nil, format('template %q not found', name)
+        end
     end
 
     -- prevent recursive rendering
@@ -107,7 +124,14 @@ local function rez_layout(rez, name, varname)
     elseif type(varname) ~= 'string' then
         error('varname must be string', 2)
     elseif not rez.tmpl[name] then
-        error(format('layout template %q not found', name), 2)
+        local ok, err = rez.loader(rez, name)
+        if not ok then
+            if err then
+                error(format('cannot apply layout %q %s', name, err), 2)
+            else
+                error(format('layout template %q not found', name), 2)
+            end
+        end
     end
 
     -- prevent recursive rendering
@@ -182,6 +206,7 @@ end
 --- @field callstack table
 --- @field curly boolean
 --- @field escape function
+--- @field loader function
 --- @field env table
 local Rez = {}
 Rez.__index = Rez
@@ -214,7 +239,7 @@ end
 --- @return boolean ok
 function Rez:del(name)
     if type(name) ~= 'string' then
-        error('name must be a string', 2)
+        error('name must be string', 2)
     elseif not self.tmpl[name] then
         return false
     end
@@ -251,6 +276,22 @@ function Rez:add(name, str)
     return true
 end
 
+--- is_callable
+--- @param v any
+--- @return boolean ok
+local function is_callable(v)
+    if type(v) == 'function' then
+        return true
+    end
+
+    local mt = getmetatable(v)
+    if type(mt) == 'table' then
+        return type(mt.__call) == 'function'
+    end
+
+    return false
+end
+
 --- new
 --- @param opts table
 --- @return Rez
@@ -263,8 +304,10 @@ local function new(opts)
         error('opts.env must be table', 2)
     elseif opts.curly ~= nil and type(opts.curly) ~= 'boolean' then
         error('opts.curly must be boolean', 2)
-    elseif opts.escape ~= nil and type(opts.escape) ~= 'function' then
-        error('opts.escape must be function', 2)
+    elseif opts.escape ~= nil and not is_callable(opts.escape) then
+        error('opts.escape must be callable value', 2)
+    elseif opts.loader ~= nil and not is_callable(opts.loader) then
+        error('opts.loader must be callable value', 2)
     end
 
     return setmetatable({
@@ -272,6 +315,7 @@ local function new(opts)
         env = opts.env,
         curly = opts.curly,
         escape = opts.escape,
+        loader = opts.loader or DEFAULT_LOADER,
     }, Rez)
 end
 
