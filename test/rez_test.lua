@@ -37,22 +37,22 @@ function testcase.add()
 
     -- test that add a template
     assert(r:add('hello', [[
-        hello {{? $.val }} world
-        {{ if $.x == 1 }} 1
-        {{ elseif $.x == 2 }} 2
-        {{ else }} N
-        {{ /if }}
-        {{ for i = 1, 3 }}
-            i = {{? i }}
-            {{ break i == 2 }}
-        {{ /for }}
-        {{ while $.x < 3 }}
-            {{ if x == 2 }}
-                {{ break }}
-                ignore here {{? $.x }}
-            {{ /if }}
-        {{code $.x = $.x + 1 }}
-        {{ /while }}
+        hello {{? $.val}} world
+        {{if $.x == 1}} 1
+        {{elseif $.x == 2}} 2
+        {{else}} N
+        {{/if}}
+        {{for i = 1, 3}}
+            i = {{? i}}
+            {{break i == 2}}
+        {{/for}}
+        {{while $.x < 3}}
+            {{if x == 2}}
+                {{break}}
+                ignore here {{? $.x}}
+            {{/if}}
+        {{code $.x = $.x + 1}}
+        {{/while}}
     ]]))
 
     -- test that closing tag x is not expected error
