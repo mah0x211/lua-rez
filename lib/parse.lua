@@ -181,6 +181,14 @@ local function tokenize(expr)
     return token
 end
 
+local EXPR_REQUIRED = {
+    ['code'] = true,
+    ['if'] = true,
+    ['elseif'] = true,
+    ['for'] = true,
+    ['while'] = true,
+}
+
 local NO_EXPR_REQUIRED = {
     ['else'] = true,
     ['/if'] = true,
@@ -233,6 +241,11 @@ local function parse_expr(tag_suffix, tag, txt, op_tail)
 
             tag.expr = token
         end
+    elseif EXPR_REQUIRED[tag.op] then
+        return nil,
+               format(
+                   'invalid tag at %d:%d: opcode %q must be declared with an expression',
+                   tag.lineno, tag.linecol, tag.op)
     end
 
     return tail + 1, nil, tag
