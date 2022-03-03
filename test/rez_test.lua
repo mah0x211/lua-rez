@@ -60,8 +60,47 @@ function testcase.add()
     assert.is_false(ok)
     assert.match(err, 'closing tag .+ is not expected', false)
 
+    -- test that opcode x must be declared with an expression
+    for _, v in ipairs({
+        {
+            tmpl = '{{ code }}',
+            opcode = 'code',
+        },
+        {
+            tmpl = '{{ if }}{{ /if }}',
+            opcode = 'if',
+        },
+        {
+            tmpl = '{{ elseif }}',
+            opcode = 'elseif',
+        },
+        {
+            tmpl = '{{ if true }}{{ else }}{{ /if }}',
+        },
+        {
+            tmpl = '{{ while false }}{{ /while }}',
+        },
+        {
+            tmpl = '{{ for }}{{ /for }}',
+            opcode = 'for',
+        },
+        {
+            tmpl = '{{ while }}{{ /while }}',
+            opcode = 'while',
+        },
+    }) do
+        ok, err = r:add('parse', v.tmpl)
+        if v.opcode then
+            assert.is_false(ok)
+            assert.match(err, 'opcode "' .. v.opcode ..
+                             '" must be declared with an expression')
+        else
+            assert(ok, err)
+        end
+    end
+
     -- test that closing tag x is expected, got y error
-    ok, err = r:add('parse', [[{{ if }}{{ /for }}]])
+    ok, err = r:add('parse', [[{{ if 1 }}{{ /for }}]])
     assert.is_false(ok)
     assert.match(err, 'closing tag .+ expected, got .+', false)
 
