@@ -281,7 +281,7 @@ local function parse_op(tag_suffix, tag, txt, op_head)
     -- verify opcode
     local op = sub(txt, op_head, op_tail - 1)
     local delimiter = sub(txt, op_tail, op_tail)
-    if delimiter ~= ' ' and delimiter ~= '-' and delimiter ~= '?' then
+    if not find(delimiter, '%s') and delimiter ~= '-' and delimiter ~= '?' then
         return nil,
                format("invalid tag at %d:%d: unknown opcode %q", tag.lineno,
                       tag.linecol, sub(txt, op_head, op_tail))
