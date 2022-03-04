@@ -268,6 +268,16 @@ local OPCODE_DELIMITERS = {
     ['}'] = true,
 }
 
+local OPCODES = {
+    ['code'] = true,
+    ['break'] = true,
+    ['elseif'] = true,
+    ['else'] = true,
+    ['if'] = true,
+    ['for'] = true,
+    ['while'] = true,
+}
+
 --- parse_op
 --- @param tag_suffix string
 --- @param tag table
@@ -277,36 +287,40 @@ local OPCODE_DELIMITERS = {
 --- @return string err
 --- @return table tag
 local function parse_op(tag_suffix, tag, txt, op_head)
-    -- parse a put opcode
-    if not tag.end_op and sub(txt, op_head, op_head) == '?' then
+    if op_head >= #txt then
+        return nil, format("invalid tag at %d:%d: opcode not declared",
+                           tag.lineno, tag.linecol)
+    end
+
+    -- treat as put opcode
+    if not tag.end_op and sub(txt, op_head, op_head) == '=' then
         local op_tail = op_head + 1
-
         tag.op = 'put'
-        if sub(txt, op_head + 1, op_head + 1) == '=' then
-            tag.no_escape = true
-            op_tail = op_tail + 1
-        end
-
+        tag.no_escape = true
         return parse_expr(tag_suffix, tag, txt, op_tail)
     end
 
     -- parse opcode
     local op_tail = find(txt, '[^a-z]', op_head)
     if not op_tail then
-        return nil, format("invalid tag at %d:%d: opcode not declared",
-                           tag.lineno, tag.linecol)
+        return nil,
+               format("invalid tag at %d:%d: not closed by '%s'", tag.lineno,
+                      tag.linecol, sub(tag_suffix, #tag_suffix - 1))
+    end
+
+    local op = sub(txt, op_head, op_tail - (op_tail > op_head and 1 or 0))
+    -- treat as put opcode
+    if not tag.end_op and not OPCODES[op] then
+        tag.op = 'put'
+        return parse_expr(tag_suffix, tag, txt, op_head)
     end
 
     -- verify opcode
-    local op = sub(txt, op_head, op_tail - 1)
     local delimiter = sub(txt, op_tail, op_tail)
     if not find(delimiter, '%s') and not OPCODE_DELIMITERS[delimiter] then
         return nil,
                format("invalid tag at %d:%d: unknown opcode %q", tag.lineno,
                       tag.linecol, sub(txt, op_head, op_tail))
-    elseif CLOSE_OP_REQUIRED[op] == nil then
-        return nil, format("invalid tag at %d:%d: unknown opcode %q",
-                           tag.lineno, tag.linecol, op)
     end
 
     tag.op = op

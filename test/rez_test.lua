@@ -37,19 +37,19 @@ function testcase.add()
 
     -- test that add a template
     assert(r:add('hello', [[
-        hello {{? $.val}} world
+        hello {{ $.val}} world
         {{if $.x == 1}} 1
         {{elseif $.x == 2}} 2
         {{else}} N
         {{/if}}
         {{for i = 1, 3}}
-            i = {{? i}}
+            i = {{i}}
             {{break i == 2}}
         {{/for}}
         {{while $.x < 3}}
             {{if x == 2}}
                 {{break}}
-                ignore here {{? $.x}}
+                ignore here {{ $.x }}
             {{/if}}
         {{code $.x = $.x + 1}}
         {{/while}}
@@ -124,18 +124,13 @@ function testcase.add()
     assert.is_false(ok)
     assert.match(err, 'opcode not declared')
 
-    -- test that unknown opcode error
-    ok, err = r:add('parse-op', [[{{ bar }}]])
-    assert.is_false(ok)
-    assert.match(err, 'unknown opcode')
-
     -- test that opcode does not support a closing tag error
     ok, err = r:add('parse-op', [[{{ /code }}]])
     assert.is_false(ok)
     assert.match(err, 'opcode .+ does not support a closing tag', false)
 
     -- test that tag not closed error
-    ok, err = r:add('parse-expr', [[{{? bar]])
+    ok, err = r:add('parse-expr', [[{{ bar]])
     assert.is_false(ok)
     assert.match(err, 'not closed by')
 
@@ -196,19 +191,19 @@ function testcase.render()
     assert(r:add('header', [[header]]))
     assert(r:add('footer', [[footer]]))
     assert(r:add('layout', [[
-{{? rez.render('header') }}
-{{? $.main }}
-{{? rez.render('footer') -}}
+{{ rez.render('header') }}
+{{ $.main }}
+{{ rez.render('footer') -}}
 ]]))
     assert(r:add('nav', [[
 global-nav
-{{? $.subnav }}]]))
+{{ $.subnav }}]]))
     assert(r:add('subnav', [[
 sub-nav
 {{- code rez.layout('nav', 'subnav') -}}]]))
     assert(r:add('main', [[
-{{? rez.render('subnav') }}
-main-contents: {{? $.hello }} {{? world() }}
+{{ rez.render('subnav') }}
+main-contents: {{ $.hello }} {{ world() }}
 {{- code rez.layout('layout', 'main') }}]]))
     local res = assert(r:render('main', {
         hello = 'hello',
@@ -242,19 +237,19 @@ function testcase.render_no_curly()
     assert(r:add('header', [[header]]))
     assert(r:add('footer', [[footer]]))
     assert(r:add('layout', [[
-<?? rez.render('header') ?>
-<?? $.main ?>
-<?? rez.render('footer') -?>
+<? rez.render('header') ?>
+<? $.main ?>
+<? rez.render('footer') -?>
 ]]))
     assert(r:add('nav', [[
 global-nav
-<?? $.subnav ?>]]))
+<? $.subnav ?>]]))
     assert(r:add('subnav', [[
 sub-nav
 <?- code rez.layout('nav', 'subnav') -?>]]))
     assert(r:add('main', [[
-<?? rez.render('subnav') ?>
-main-contents: <?? $.hello ?> <?? world() ?>
+<? rez.render('subnav') ?>
+main-contents: <? $.hello ?> <? world() ?>
 <?- code rez.layout('layout', 'main') ?>]]))
     local res = assert(r:render('main', {
         hello = 'hello',
@@ -286,8 +281,8 @@ function testcase.escape_ouput()
 
     -- test that render template
     assert(r:add('escape', [[<p>
-{{- ? $.xss }}
-{{- ?= $.no_escape }}</p>]]))
+{{- $.xss }}
+{{- = $.no_escape }}</p>]]))
     local res = assert(r:render('escape', {
         xss = '<script> alert("xss"); </script>',
         no_escape = '<hello>',
@@ -313,22 +308,22 @@ function testcase.render_with_loader()
                     return r:add('footer', [[footer]])
                 elseif name == 'layout' then
                     return r:add('layout', [[
-{{? rez.render('header') }}
-{{? $.main }}
-{{? rez.render('footer') -}}
+{{ rez.render('header') }}
+{{ $.main }}
+{{ rez.render('footer') -}}
 ]])
                 elseif name == 'nav' then
                     return r:add('nav', [[
 global-nav
-{{? $.subnav }}]])
+{{ $.subnav }}]])
                 elseif name == 'subnav' then
                     return r:add('subnav', [[
 sub-nav
 {{- code rez.layout('nav', 'subnav') -}}]])
                 elseif name == 'main' then
                     return r:add('main', [[
-{{? rez.render('subnav') }}
-main-contents: {{? $.hello }} {{? world() }}
+{{ rez.render('subnav') }}
+main-contents: {{ $.hello }} {{ world() }}
 {{- code rez.layout('layout', 'main') }}]])
                 else
                     return false, 'not found'

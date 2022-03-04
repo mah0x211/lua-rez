@@ -36,19 +36,19 @@ local function setup_layout()
     assert(rez:add('header', [[header]]))
     assert(rez:add('footer', [[footer]]))
     assert(rez:add('layout', [[
-{{? rez.render('header') }}
-{{? $.main }}
-{{? rez.render('footer') -}}
+{{ rez.render('header') }}
+{{ $.main }}
+{{ rez.render('footer') -}}
 ]]))
     assert(rez:add('nav', [[
 global-nav
-{{? $.subnav }}]]))
+{{ $.subnav }}]]))
     assert(rez:add('subnav', [[
 sub-nav
 {{- code rez.layout('nav', 'subnav') -}}]]))
     assert(rez:add('main', [[
-{{? rez.render('subnav') }}
-main-contents: {{? $.hello }} {{? world() }}
+{{ rez.render('subnav') }}
+main-contents: {{ $.hello }} {{ world() }}
 {{- code rez.layout('layout', 'main') }}]]))
     return rez, [[
 header
@@ -71,7 +71,7 @@ local function setup_simple()
 
     -- test that render template
     assert(rez:add('main', [[
-main-contents: {{? $.hello }} {{? world() }}
+main-contents: {{ $.hello }} {{ world() }}
 ]]))
     return rez, [[main-contents: hello world!]]
 end
