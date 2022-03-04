@@ -71,7 +71,7 @@ add the template `str` and set the name `name`.
 
 ```lua
 local rez = require('rez').new()
-assert(rez:add('/index.html', '{{? "hello world" }}' ))
+assert(rez:add('/index.html', '{{ "hello world" }}' ))
 ```
 
 ## ok = r:del( name )
@@ -90,7 +90,7 @@ deletes the template with the specified `name`.
 
 ```lua
 local rez = require('rez').new()
-assert(rez:add('/index.html', '{{? "hello world" }}'))
+assert(rez:add('/index.html', '{{ "hello world" }}'))
 assert(rez:del('/index.html'))
 ```
 
@@ -113,7 +113,7 @@ renders the template specified by `name`.
 ```lua
 local rez = require('rez').new()
 assert(rez:add('/index.html', [[
-{{? $.hello }} {{? $.world }}
+{{ $.hello }} {{ $.world }}
 ]]))
 local res = assert(rez:render('/index.html', {
     hello = 'Hello',
@@ -164,32 +164,27 @@ also, if specified with a hyphen (`{{-`, `-}}`), the preceding and following a n
 
 ## Output Statement
 
-To output, add a `?` character at just behind of the started delimiter `{{`, and describe the expression `expr`. 
-
-If you need to disable escaping of the value, add an additional `=` character.
+To output, just describe the expression `expr`. If you need to disable escaping of the value, add an `=` character before `expr`.
 
 **Syntax**
 
 ```
-{{ ? [expr] }}
+{{ [expr] }}
 
 -- output a raw value
-{{ ?= [expr] }}
-
--- do not include any spaces.
-{{ ? = [expr] }}
+{{ = [expr] }}
 
 -- combine with newline removal syntax
-{{- ?= [expr] -}}
+{{- = [expr] -}}
 ```
 
 
 **Example**
 
 ```
-{{? 'Hello World' }}
-{{? 1 + 10 }}
-{{? 'Hello', 'World' }}
+{{ 'Hello World' }}
+{{ 1 + 10 }}
+{{ 'Hello', 'World' }}
 ```
 
 the above template will be rendered as follows.
@@ -259,7 +254,7 @@ x is 1
 {{ elseif x == 2 }}
 x is 2
 {{ else }}
-x is {{? x }}
+x is {{ x }}
 {{ /if }}
 ```
 
@@ -298,14 +293,14 @@ x is 3
 ```
 {{ for i = 1, 20, 2 }}
 {{ break i >= 10 }}
-i = {{? i }}
+i = {{ i }}
 {{ /for }}
 ```
 
 ```
 {{code local i = 1 }}
 {{ while i <= 20 }}
-i = {{? i }}
+i = {{ i }}
 {{code i = i + 2 }}
 {{ break i >= 10 }}
 {{ /while }}
@@ -314,7 +309,7 @@ i = {{? i }}
 ```
 {{code local i = 1 }}
 {{ while i <= 20 }}
-i = {{? i }}
+i = {{ i }}
 {{code i = i + 2 }}
 {{ if i >= 10 }}{{ break }}{{ /if }}
 {{ /while }}
@@ -353,7 +348,7 @@ renders the template specified by `name`. also, external data will be passed ove
 **Example**
 
 ```
-{{? rez.render('other_template_name') }}
+{{ rez.render('other_template_name') }}
 ```
 
 ## rez.layout( name, varname )
@@ -374,7 +369,7 @@ local rez = require('rez').new()
 -- add layout template
 rez:add('my-layout', [[
 Hello My Layout
-{{? $.contents }}
+{{ $.contents }}
 ]])
 
 -- add main-contents template
@@ -404,7 +399,7 @@ local rez = require('rez').new()
 -- add layout template
 rez:add('my-layout', [[
 Hello My Layout
-{{? $.contents }}
+{{ $.contents }}
 ]])
 
 -- add main-contents template
