@@ -209,6 +209,11 @@ local function new_env(rez)
             return rez_layout(rez, name, varname)
         end,
     }
+    -- export escape functions
+    for k, v in pairs(escape) do
+        fenv.rez['escape_' .. k] = v
+    end
+
     -- add rez.escape function to escape the output strings
     -- this function will be renamed by compiler
     fenv.rez.escape_html = is_callable(rez.escape) and rez.escape or escape.html
