@@ -37,6 +37,22 @@ local concat = require('rez.concat')
 local nilobj_enable = nilobj.enable
 local nilobj_disable = nilobj.disable
 
+--- is_callable
+--- @param v any
+--- @return boolean ok
+local function is_callable(v)
+    if type(v) == 'function' then
+        return true
+    end
+
+    local mt = getmetatable(v)
+    if type(mt) == 'table' then
+        return type(mt.__call) == 'function'
+    end
+
+    return false
+end
+
 --- default_loader
 --- @return boolean ok
 --- @return string err
@@ -193,7 +209,7 @@ local function new_env(rez)
         end,
     }
     -- add rez.escape function to escape the output strings
-    if type(rez.escape) == 'function' then
+    if is_callable(rez.escape) then
         -- this function will be renamed by compiler
         fenv.rez.escape = rez.escape
     end
@@ -289,22 +305,6 @@ function Rez:add(name, str)
     self.tmpl[name] = tmpl
 
     return true
-end
-
---- is_callable
---- @param v any
---- @return boolean ok
-local function is_callable(v)
-    if type(v) == 'function' then
-        return true
-    end
-
-    local mt = getmetatable(v)
-    if type(mt) == 'table' then
-        return type(mt.__call) == 'function'
-    end
-
-    return false
 end
 
 --- new
