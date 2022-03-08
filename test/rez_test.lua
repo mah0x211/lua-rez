@@ -1,7 +1,6 @@
 require('luacov')
 local testcase = require('testcase')
 local rez = require('rez')
-local escape_html = require('rez.escape').html
 
 function testcase.new()
     -- test that create new rez object
@@ -297,7 +296,6 @@ end
 
 function testcase.escape_ouput()
     local r = rez.new({
-        escape = escape_html,
         env = {
             world = function()
                 return 'world!'

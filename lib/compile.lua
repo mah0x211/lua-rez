@@ -163,10 +163,10 @@ local function compile(label, tags, env)
     local escfn_name
 
     -- rename rez.escape function
-    if env.rez.escape then
+    if env.rez.escape_html then
         escfn_name = 'ESC' .. genid()
-        rawset(env, escfn_name, env.rez.escape)
-        rawset(env.rez, 'escape', nil)
+        rawset(env, escfn_name, env.rez.escape_html)
+        rawset(env.rez, 'escape_html', nil)
     end
 
     for i, tag in ipairs(tags) do
