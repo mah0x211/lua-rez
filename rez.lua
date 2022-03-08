@@ -254,6 +254,16 @@ function Rez:del(name)
     return true
 end
 
+--- exists
+--- @param name string
+--- @return boolean ok
+function Rez:exists(name)
+    if type(name) ~= 'string' then
+        error('name must be string', 2)
+    end
+    return self.tmpl[name] ~= nil
+end
+
 --- add
 --- @param name string
 --- @param str string

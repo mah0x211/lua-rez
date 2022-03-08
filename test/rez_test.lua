@@ -165,6 +165,21 @@ function testcase.add()
     assert.match(err, 'str must be string')
 end
 
+function testcase.exists()
+    local r = rez.new()
+
+    -- test that return false
+    assert.is_false(r:exists('hello'))
+
+    -- test that return true
+    assert(r:add('hello', [[world]]))
+    assert.is_true(r:exists('hello'))
+
+    -- test that throws an error when invalid arguments are passed
+    local err = assert.throws(r.exists, r, 123)
+    assert.match(err, 'name must be string')
+end
+
 function testcase.del()
     local r = rez.new()
     assert(r:add('hello', [[world]]))
