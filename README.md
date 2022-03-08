@@ -75,6 +75,27 @@ assert(rez:add('/index.html', '{{ "hello world" }}' ))
 ```
 
 
+## ok = r:exists( name )
+
+determines whether the specified `name` of template exists.
+
+**Parameters**
+
+- `name:string`: name of the template.
+
+**Returns**
+
+- `ok:boolean`: `true` if exists.
+
+**Example**
+
+```lua
+local rez = require('rez').new()
+assert(rez:add('/index.html', '{{ "hello world" }}' ))
+assert(rez:exists('/index.html'))
+```
+
+
 ## ok = r:del( name )
 
 deletes the template with the specified `name`.
