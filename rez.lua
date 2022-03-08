@@ -34,6 +34,7 @@ local nilobj = require('rez.nilobj')
 local errmap = require('rez.errmap')
 local seal = require('rez.seal')
 local concat = require('rez.concat')
+local escape = require('rez.escape')
 local nilobj_enable = nilobj.enable
 local nilobj_disable = nilobj.disable
 
@@ -209,10 +210,8 @@ local function new_env(rez)
         end,
     }
     -- add rez.escape function to escape the output strings
-    if is_callable(rez.escape) then
-        -- this function will be renamed by compiler
-        fenv.rez.escape = rez.escape
-    end
+    -- this function will be renamed by compiler
+    fenv.rez.escape_html = is_callable(rez.escape) and rez.escape or escape.html
 
     return seal(fenv)
 end
