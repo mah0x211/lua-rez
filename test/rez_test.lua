@@ -372,3 +372,24 @@ sub-nav
 main-contents: hello world!
 footer]])
 end
+
+function testcase.builtin_rez_escape()
+    local r = rez.new({
+        env = {
+            world = function()
+                return 'world!'
+            end,
+        },
+    })
+
+    -- test that render template
+    assert(r:add('escape', [[<p>
+{{- rez.escape_html($.xss) }}
+{{- = rez.escape_html($.no_escape) }}</p>]]))
+    local res = assert(r:render('escape', {
+        xss = '<script> alert("xss"); </script>',
+        no_escape = '<hello>',
+    }))
+    assert.equal(res,
+                 [[<p>&amp;lt;script&amp;gt; alert(&amp;#34;xss&amp;#34;); &amp;lt;/script&amp;gt;&lt;hello&gt;</p>]])
+end
