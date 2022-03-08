@@ -74,6 +74,7 @@ local rez = require('rez').new()
 assert(rez:add('/index.html', '{{ "hello world" }}' ))
 ```
 
+
 ## ok = r:del( name )
 
 deletes the template with the specified `name`.
@@ -94,7 +95,21 @@ assert(rez:add('/index.html', '{{ "hello world" }}'))
 assert(rez:del('/index.html'))
 ```
 
-## res, err = rez:render( name [, data] )
+
+## r:clear()
+
+delete all templates.
+
+**Example**
+
+```lua
+local rez = require('rez').new()
+assert(rez:add('/index.html', '{{ "hello world" }}'))
+assert(rez:clear('/index.html'))
+```
+
+
+## res, err = r:render( name [, data] )
 
 renders the template specified by `name`.
 
@@ -121,6 +136,7 @@ local res = assert(rez:render('/index.html', {
 }))
 print(res)
 ```
+
 
 ## Helper Functions
 

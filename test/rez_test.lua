@@ -178,6 +178,17 @@ function testcase.del()
     assert.match(err, 'name must be string')
 end
 
+function testcase.clear()
+    local r = rez.new()
+    assert(r:add('hello', [[world]]))
+    assert(r:add('foo', [[bar]]))
+
+    -- test that delete a template
+    r:clear()
+    assert.is_false(r:del('hello'))
+    assert.is_false(r:del('foo'))
+end
+
 function testcase.render()
     local r = rez.new({
         env = {

@@ -234,6 +234,11 @@ function Rez:render(name, data)
     return res, err
 end
 
+--- clear
+function Rez:clear()
+    self.tmpl = {}
+end
+
 --- del
 --- @param name string
 --- @return boolean ok
