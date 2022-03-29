@@ -144,14 +144,24 @@ function testcase.add()
     assert.match(err, 'contains disallowed keywords')
 
     -- test that literal token is not closed error
-    ok, err = r:add('tokenize', [[{{? "code }}]])
+    ok, err = r:add('tokenize', [[{{ "code }}]])
+    assert.is_false(ok)
+    assert.match(err, 'literal token is not closed')
+
+    -- test that literal token is not closed error
+    ok, err = r:add('tokenize', [=[{{ [[code }}]=])
+    assert.is_false(ok)
+    assert.match(err, 'literal token is not closed')
+
+    -- test that literal token is not closed error
+    ok, err = r:add('tokenize', [[{{ [===[code]==] }}]])
     assert.is_false(ok)
     assert.match(err, 'literal token is not closed')
 
     -- test that syntax error
     ok, err = r:add('compile', [[
         hello
-        {{? foo bar;  }}
+        {{ foo bar;  }}
         world]])
     assert.is_false(ok)
     assert.match(err, 'compile"%]:2.+', false)
