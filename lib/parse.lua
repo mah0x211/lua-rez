@@ -134,8 +134,9 @@ local function tokenize(expr)
         elseif sym == '"' or sym == "'" then
             is_literal = true
         elseif sym == '[' then
-            local bhead, btail = find(expr, '=*%[', head + 1)
+            local bhead, btail = find(expr, '^=*%[', head + 1)
             if bhead then
+                -- treat as the long-bracket literal string
                 is_literal = true
                 tail = btail
                 sym = sub(expr, head, tail)
