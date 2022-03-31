@@ -246,10 +246,14 @@ function Rez:render(name, data)
     self.callstack = {}
     self.data = data or {}
     nilobj_enable()
-    local res, err = render(self, name)
+    local ok, res, err = pcall(render, self, name)
     nilobj_disable()
     self.callstack = nil
     self.data = nil
+
+    if not ok then
+        return nil, res
+    end
 
     return res, err
 end
