@@ -93,6 +93,12 @@ local BRACKET_CLOSE = {
 
 local BACKSLASH = byte('\\')
 
+local SPACES = {
+    [' '] = ' ',
+    ['\n'] = '\n',
+    ['\t'] = '\t',
+}
+
 --- tokenize
 --- @param expr string
 --- @return table token
@@ -176,6 +182,11 @@ local function tokenize(expr)
             end
             tail = ptail
             token[#token + 1] = sub(expr, head, tail)
+        elseif SPACES[sym] then
+            -- ignore multiple space token
+            if token[#token] ~= sym then
+                token[#token + 1] = sym
+            end
         else
             if BRACKET_OPEN[sym] then
                 brackets[#brackets + 1] = sym
