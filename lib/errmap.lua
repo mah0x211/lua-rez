@@ -24,16 +24,19 @@ local match = string.match
 local tonumber = tonumber
 
 --- generate error string with source mapping table
+--- @param label string
+--- @param srcmap table
+--- @param err string
 --- @return string err
-local function errmap(label, tags, err)
+local function errmap(label, srcmap, err)
     if type(label) ~= 'string' then
         error('label must be string', 2)
     elseif type(err) ~= 'string' then
         error('err must be string', 2)
-    elseif tags == nil then
+    elseif srcmap == nil then
         return err
-    elseif type(tags) ~= 'table' then
-        error('tags must be table', 2)
+    elseif type(srcmap) ~= 'table' then
+        error('srcmap must be table', 2)
     end
 
     -- find error position
@@ -50,12 +53,12 @@ local function errmap(label, tags, err)
     --  - and, logic code...
     --
     idx = tonumber(idx, 10) - 1
-    local tag = tags[idx]
+    local tag = srcmap[idx]
     if not tag then
         return err
     end
 
-    return format('invalid tag at [%q]:%d:%d: %s', label, tag.lineno,
+    return format('invalid tag %q at [%q]:%d:%d: %s', tag.op, label, tag.lineno,
                   tag.linecol, msg)
 end
 

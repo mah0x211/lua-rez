@@ -106,13 +106,13 @@ local function render(rez, name)
         if ok then
             data[ctx.layout.varname] = concat(res)
         else
-            data[ctx.layout.varname] = errmap(name, target.tags, res)
+            data[ctx.layout.varname] = errmap(name, target.srcmap, res)
         end
         return render(rez, ctx.layout.name)
     end
 
     if not ok then
-        return nil, errmap(name, target.tags, res)
+        return nil, errmap(name, target.srcmap, res)
     end
 
     return concat(res)
