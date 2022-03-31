@@ -31,7 +31,7 @@ function testcase.new()
     assert.match(err, 'opts.env must be table')
 end
 
-function testcase.add()
+function testcase.add_exists()
     local r = rez.new()
 
     -- test that add a template
@@ -53,143 +53,17 @@ function testcase.add()
         {{code $.x = $.x + 1}}
         {{/while}}
     ]]))
-
-    -- test that closing tag x is not expected error
-    local ok, err = r:add('parse', [[{{ /if }}]])
-    assert.is_false(ok)
-    assert.match(err, 'closing tag .+ is not expected', false)
-
-    -- test that opcode x must be declared with an expression
-    for _, v in ipairs({
-        {
-            tmpl = '{{ code }}',
-            opcode = 'code',
-        },
-        {
-            tmpl = '{{ ? }}',
-            opcode = 'code',
-        },
-        {
-            tmpl = '{{ if }}{{ /if }}',
-            opcode = 'if',
-        },
-        {
-            tmpl = '{{ elseif }}',
-            opcode = 'elseif',
-        },
-        {
-            tmpl = '{{ if true }}{{ else }}{{ /if }}',
-        },
-        {
-            tmpl = '{{ while false }}{{ /while }}',
-        },
-        {
-            tmpl = '{{ for }}{{ /for }}',
-            opcode = 'for',
-        },
-        {
-            tmpl = '{{ while }}{{ /while }}',
-            opcode = 'while',
-        },
-    }) do
-        ok, err = r:add('parse', v.tmpl)
-        if v.opcode then
-            assert.is_false(ok)
-            assert.match(err, 'opcode "' .. v.opcode ..
-                             '" must be declared with an expression')
-        else
-            assert(ok, err)
-        end
-    end
-
-    -- test that closing tag x is expected, got y error
-    ok, err = r:add('parse', [[{{ if 1 }}{{ /for }}]])
-    assert.is_false(ok)
-    assert.match(err, 'closing tag .+ expected, got .+', false)
-
-    -- test that tag must be declared inside of x error
-    ok, err = r:add('parse', [[{{ break }}]])
-    assert.is_false(ok)
-    assert.match(err, 'tag must be declared inside of')
-
-    -- test that tag must be declared after x error
-    ok, err = r:add('parse', [[{{ else }}]])
-    assert.is_false(ok)
-    assert.match(err, 'tag must be declared after')
-
-    -- test that closing tag not declared error
-    ok, err = r:add('parse', [[{{ if true }}]])
-    assert.is_false(ok)
-    assert.match(err, 'not closed by')
-
-    -- test that opcode not declared error
-    ok, err = r:add('parse-op', [[{{ ]])
-    assert.is_false(ok)
-    assert.match(err, 'opcode not declared')
-
-    -- test that opcode does not support a closing tag error
-    ok, err = r:add('parse-op', [[{{ /code }}]])
-    assert.is_false(ok)
-    assert.match(err, 'opcode .+ does not support a closing tag', false)
-
-    -- test that tag not closed error
-    ok, err = r:add('parse-expr', [[{{ bar]])
-    assert.is_false(ok)
-    assert.match(err, 'not closed by')
-
-    -- test that opcode cannot be declared with an expression error
-    ok, err = r:add('parse-expr', [[{{ else foo }}]])
-    assert.is_false(ok)
-    assert.match(err, 'opcode .+ cannot be declared with an expression', false)
-
-    -- test that contains disallowed keywords error
-    ok, err = r:add('tokenize', [[{{ code do }}]])
-    assert.is_false(ok)
-    assert.match(err, 'contains disallowed keywords')
-
-    -- test that literal token is not closed error
-    ok, err = r:add('tokenize', [[{{ "code }}]])
-    assert.is_false(ok)
-    assert.match(err, 'literal token is not closed')
-
-    -- test that literal token is not closed error
-    ok, err = r:add('tokenize', [=[{{ [[code }}]=])
-    assert.is_false(ok)
-    assert.match(err, 'literal token is not closed')
-
-    -- test that literal token is not closed error
-    ok, err = r:add('tokenize', [[{{ [===[code]==] }}]])
-    assert.is_false(ok)
-    assert.match(err, 'literal token is not closed')
-
-    -- test that syntax error
-    ok, err = r:add('compile', [[
-        hello
-        {{ foo bar;  }}
-        world]])
-    assert.is_false(ok)
-    assert.match(err, 'compile"%]:2.+', false)
+    assert.is_true(r:exists('hello'))
 
     -- test that throws an error when invalid arguments are passed
-    err = assert.throws(r.add, r, 123)
+    local err = assert.throws(r.add, r, 123)
     assert.match(err, 'name must be string')
 
     err = assert.throws(r.add, r, 'foo', 123)
     assert.match(err, 'str must be string')
-end
-
-function testcase.exists()
-    local r = rez.new()
-
-    -- test that return false
-    assert.is_false(r:exists('hello'))
-
-    -- test that return true
-    assert(r:add('hello', [[world]]))
-    assert.is_true(r:exists('hello'))
 
     -- test that throws an error when invalid arguments are passed
-    local err = assert.throws(r.exists, r, 123)
+    err = assert.throws(r.exists, r, 123)
     assert.match(err, 'name must be string')
 end
 
@@ -416,4 +290,321 @@ function testcase.builtin_rez_escape()
     }))
     assert.equal(res,
                  [[<p>&amp;lt;script&amp;gt; alert(&amp;#34;xss&amp;#34;); &amp;lt;/script&amp;gt;&lt;hello&gt;</p>]])
+end
+
+function testcase.syntax_if_elseif_else()
+    local r = rez.new()
+
+    -- test that render template
+    assert(r:add('parse',
+                 [[{{if true }}hello{{elseif true }}rez{{else}}world{{/if}}]]))
+    local res = assert(r:render('parse'))
+    assert.equal(res, 'hello')
+
+    -- test that return an error
+    local ok, err = r:add('parse', [[
+        {{ if }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "if" must be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ if true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"if" is not closed by "/if" tag')
+
+    ok, err = r:add('parse', [[
+        {{ if true }}
+        {{ elseif true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"if" is not closed by "/if" tag')
+
+    ok, err = r:add('parse', [[
+        {{ if true }}
+        {{ elseif true }}
+        {{ else }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"if" is not closed by "/if" tag')
+
+    ok, err = r:add('parse', [[
+        {{ /if }}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'closing tag "/if" is not expected')
+
+    ok, err = r:add('parse', [[
+        {{ /if 1 + 1 }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "/if" cannot be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ elseif }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "elseif" must be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ elseif true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"elseif" tag must be declared after "if" tag')
+
+    ok, err = r:add('parse', [[
+        {{ /elseif true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "elseif" does not support a closing tag')
+
+    ok, err = r:add('parse', [[
+        {{ else true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "else" cannot be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ else }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"else" tag must be declared after "if" tag')
+
+    ok, err = r:add('parse', [[
+        {{ /else }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "else" does not support a closing tag')
+end
+
+function testcase.syntax_for()
+    local r = rez.new()
+
+    -- test that render template
+    assert(r:add('parse', [[{{for i = 1, 3 }}hello{{/for}}]]))
+    local res = assert(r:render('parse'))
+    assert.equal(res, 'hellohellohello')
+
+    -- test that return an error
+    local ok, err = r:add('parse', [[
+        {{ for }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "for" must be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ for true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"for" is not closed by "/for" tag')
+
+    ok, err = r:add('parse', [[
+        {{ /for 1 + 1 }}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "/for" cannot be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ /for }}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'closing tag "/for" is not expected')
+end
+
+function testcase.syntax_while()
+    local r = rez.new()
+
+    -- test that render template
+    assert(r:add('parse',
+                 [[{{while $.i < 3 }}hello{{? $.i = $.i + 1}}{{/while}}]]))
+    local res = assert(r:render('parse', {
+        i = 0,
+    }))
+    assert.equal(res, 'hellohellohello')
+
+    -- test that return an error
+    local ok, err = r:add('parse', [[
+        {{ while }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "while" must be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ while true }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, '"while" is not closed by "/while" tag')
+
+    ok, err = r:add('parse', [[
+        {{ /while 1 + 1 }}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "/while" cannot be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ /while }}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'closing tag "/while" is not expected')
+end
+
+function testcase.syntax_break()
+    local r = rez.new()
+
+    -- test that render template
+    assert(r:add('parse', [[{{for i = 0, 3 }}hello{{break}}{{/for}}]]))
+    local res = assert(r:render('parse'))
+    assert.equal(res, 'hello')
+
+    assert(r:add('parse', [[{{for i = 0, 3 }}{{break i == 2 }}hello{{/for}}]]))
+    res = assert(r:render('parse'))
+    assert.equal(res, 'hellohello')
+
+    assert(r:add('parse',
+                 [[{{while $.i < 3 }}hello{{? $.i = $.i + 1}}{{break}}{{/while}}]]))
+    res = assert(r:render('parse', {
+        i = 0,
+    }))
+    assert.equal(res, 'hello')
+
+    assert(r:add('parse',
+                 [[{{while $.i < 3 }}{{break $.i == 2 }}hello{{? $.i = $.i + 1}}{{/while}}]]))
+    res = assert(r:render('parse', {
+        i = 0,
+    }))
+    assert.equal(res, 'hellohello')
+
+    -- test that return an error
+    local ok, err = r:add('parse', [[
+        {{ break }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err,
+                 '"break" tag must be declared inside of "for" or "while" tag')
+
+    ok, err = r:add('parse', [[{{ /break }}]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "break" does not support a closing tag')
+end
+
+function testcase.syntax_code()
+    local r = rez.new()
+
+    -- test that render template
+    assert(r:add('parse', [[{{code $.i = $.i + 1 }}]]))
+    local data = {
+        i = 0,
+    }
+    local res = assert(r:render('parse', data))
+    assert.equal(res, '')
+    assert.equal(data, {
+        i = 1,
+    })
+
+    assert(r:add('parse', [[{{? $.i = $.i + 1 }}]]))
+    res = assert(r:render('parse', data))
+    assert.equal(res, '')
+    assert.equal(data, {
+        i = 2,
+    })
+
+    -- test that return an error
+    local ok, err = r:add('parse', [[
+        {{ code }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "code" must be declared with an expression')
+
+    ok, err = r:add('parse', [[
+        {{ /code }}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode "code" does not support a closing tag')
+end
+
+function testcase.syntax_tag_declaration()
+    local r = rez.new()
+
+    -- test that opcode not declared error
+    local ok, err = r:add('parse-op', [[{{ ]])
+    assert.is_false(ok)
+    assert.match(err, 'opcode not declared')
+
+    -- test that tag not closed error
+    ok, err = r:add('parse-expr', [[{{ foo]])
+    assert.is_false(ok)
+    assert.match(err, 'not closed by "}}"')
+end
+
+function testcase.syntax_tokenize()
+    local format = string.format
+    local r = rez.new()
+
+    -- test that contains disallowed keywords error
+    for _, keyword in ipairs({
+        'self',
+        'break',
+        'do',
+        'else',
+        'elseif',
+        'end',
+        'for',
+        'function',
+        'goto',
+        'nil',
+        'repeat',
+        'return',
+        'then',
+        'until',
+        'while',
+    }) do
+        local ok, err = r:add('tokenize', format([[
+            {{? %s }}
+        ]], keyword))
+        assert.is_false(ok)
+        assert.match(err, format('contains disallowed keywords %q', keyword))
+    end
+
+    -- test that literal token is not closed error
+    for sym_open, sym_close in pairs({
+        ["'"] = "'",
+        ['"'] = '"',
+        ['[['] = ']]',
+        ['[=['] = ']=]',
+        ['[==['] = ']==]',
+    }) do
+        local ok, err = r:add('tokenize', format([[
+            {{ %sliteral }}
+        ]], sym_open))
+        assert.is_false(ok)
+        assert.match(err, format('literal token is not closed by %q', sym_close))
+    end
+
+    -- test that bracket token is not closed error
+    for sym_open, sym_close in pairs({
+        ['['] = ']',
+        ['{'] = '}',
+        ['('] = ')',
+    }) do
+        local ok, err = r:add('tokenize', format([[
+        {{ %s  }}
+    ]], sym_open))
+        assert.is_false(ok)
+        assert.match(err, format('bracket token %q is not closed by %q',
+                                 sym_open, sym_close))
+    end
+
+    -- test that illegal bracket token error
+    for _, sym_close in ipairs({
+        ']',
+        '}',
+        ')',
+    }) do
+        local ok, err = r:add('tokenize', format([[
+        {{ %s  }}
+    ]], sym_close))
+        assert.is_false(ok)
+        assert.match(err, format('illegal bracket token %q', sym_close))
+    end
 end
