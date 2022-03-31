@@ -381,6 +381,16 @@ global-nav
 sub-nav
 main-contents: hello world!
 footer]])
+
+    -- test that return an error
+    r:clear()
+    r.loader = function()
+        return false, 'failed to load template'
+    end
+    local err
+    res, err = r:render('foo')
+    assert.is_nil(res)
+    assert.match(err, 'failed to load template')
 end
 
 function testcase.builtin_rez_escape()
