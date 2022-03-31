@@ -301,19 +301,27 @@ local function parse_op(tag_suffix, tag, txt, op_head)
         return parse_expr(tag_suffix, tag, txt, op_tail)
     end
 
+    -- treat as code opcode
+    local skip = 0
+    local op
+    if not tag.end_op and sub(txt, op_head, op_head) == '?' then
+        op = 'code'
+        skip = 1
+    end
+
     -- parse opcode
-    local op_tail = find(txt, '[^a-z]', op_head)
+    local op_tail = find(txt, '[^a-z]', op_head + skip)
     if not op_tail then
         return nil,
                format("invalid tag at %d:%d: not closed by '%s'", tag.lineno,
                       tag.linecol, sub(tag_suffix, #tag_suffix - 1))
-    end
-
-    local op = sub(txt, op_head, op_tail - (op_tail > op_head and 1 or 0))
-    -- treat as put opcode
-    if not tag.end_op and not OPCODES[op] then
-        tag.op = 'put'
-        return parse_expr(tag_suffix, tag, txt, op_head)
+    elseif not op then
+        op = sub(txt, op_head, op_tail - (op_tail > op_head and 1 or 0))
+        -- treat as put opcode
+        if not tag.end_op and not OPCODES[op] then
+            tag.op = 'put'
+            return parse_expr(tag_suffix, tag, txt, op_head)
+        end
     end
 
     -- verify opcode

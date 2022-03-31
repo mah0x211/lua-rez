@@ -66,6 +66,10 @@ function testcase.add()
             opcode = 'code',
         },
         {
+            tmpl = '{{ ? }}',
+            opcode = 'code',
+        },
+        {
             tmpl = '{{ if }}{{ /if }}',
             opcode = 'if',
         },
@@ -227,7 +231,7 @@ function testcase.render()
     assert(r:add('footer', [[footer]]))
     assert(r:add('layout', [[
 {{ rez.render('header') }}
-{{ $.main }}
+{{ $.main }} {{? local foo = 'foo' }}{{ foo }}
 {{ rez.render('footer') -}}
 ]]))
     assert(r:add('nav', [[
@@ -247,7 +251,7 @@ main-contents: {{ $.hello }} {{ world() }}
 header
 global-nav
 sub-nav
-main-contents: hello world!
+main-contents: hello world! foo
 footer]])
 
     -- test that throws an error when invalid arguments are passed
@@ -273,7 +277,7 @@ function testcase.render_no_curly()
     assert(r:add('footer', [[footer]]))
     assert(r:add('layout', [[
 <? rez.render('header') ?>
-<? $.main ?>
+<? $.main ?> <? ? local foo = 'foo' ?><? foo ?>
 <? rez.render('footer') -?>
 ]]))
     assert(r:add('nav', [[
@@ -293,7 +297,7 @@ main-contents: <? $.hello ?> <? world() ?>
 header
 global-nav
 sub-nav
-main-contents: hello world!
+main-contents: hello world! foo
 footer]])
 
     -- test that throws an error when invalid arguments are passed

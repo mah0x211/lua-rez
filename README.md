@@ -243,6 +243,12 @@ you can write Lua code other than control statements.
 {{ code [expr] }}
 ```
 
+or, place the `?` character before `expr`.
+
+```
+{{ ? [expr] }}
+```
+
 **Example**
 
 ```
@@ -251,6 +257,18 @@ you can write Lua code other than control statements.
 {{code local z = table.concat( y, '-' ) }}
 {{code local a = 1; x = z }}
 ```
+
+the above code could also be written as follows;
+
+```
+{{code 
+    local x = 1
+    local y = { 1, 2, 3 }
+    local z = table.concat( y, '-' )
+    local a = 1; x = z 
+}}
+```
+
 
 **NOTE:** you cannot declare a global variable.
 
