@@ -608,3 +608,27 @@ function testcase.syntax_tokenize()
         assert.match(err, format('illegal bracket token %q', sym_close))
     end
 end
+
+function testcase.compile_error()
+    local r = rez.new()
+
+    -- test that compile error
+    local ok, err = r:add('parse', [[
+        {{ hello }}
+        {{?
+            local foo = 1
+
+            local bar = 2
+
+        }}
+        {{for
+            k,
+            v = pairs(baz)
+        }}
+            {{ world }}
+        {{/for}}
+    ]])
+    assert.is_false(ok)
+    assert.match(err, 'invalid tag "for" at ["parse"]:8')
+end
+

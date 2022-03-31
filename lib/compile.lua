@@ -109,18 +109,27 @@ local function getpad(n)
 end
 
 --- eval_expr
----@param expr table|nil
----@param did string data id
----@return string expr
-local function eval_expr(expr, did)
+--- @param srcmap table[]
+--- @param tag table|nil
+--- @param did string data id
+--- @return string expr
+local function eval_expr(srcmap, tag, did)
+    local expr = tag.expr
+
+    -- append tag for source line
+    srcmap[#srcmap + 1] = tag
     if type(expr) ~= 'table' then
         return expr
     end
 
     local dataname = 'D' .. did
     for i, v in ipairs(expr) do
-        if v == '$' and (not expr[i - 1] or find(expr[i - 1], '[^%w%._]')) and
+        if v == '\n' then
+            -- append tag for source line
+            srcmap[#srcmap + 1] = tag
+        elseif v == '$' and (not expr[i - 1] or find(expr[i - 1], '[^%w%._]')) and
             (not expr[i + 1] or find(expr[i + 1], '^[^%w_]')) then
+            -- replace '$' token with external data token
             expr[i] = dataname
         end
     end
@@ -168,13 +177,15 @@ local function compile(label, tags, env)
         rawset(env, escfn_name, env.rez.escape_html)
     end
 
+    -- srcmap holds tags for each line of source code
+    local srcmap = {}
     for i, tag in ipairs(tags) do
         local eval = OPFUNC[tag.op]
         if not eval then
             return nil, format('unsupported tag#%d: tag.op %q', i, tag.op)
         end
 
-        local expr = eval_expr(tag.expr, did)
+        local expr = eval_expr(srcmap, tag, did)
 
         -- manipulate indentation
         local pad = padding
@@ -221,13 +232,13 @@ local function compile(label, tags, env)
     local src = concat(chunk, '\n')
     local fn, err = loadstring(src, env, label)
     if err then
-        return nil, errmap(label, tags, err)
+        return nil, errmap(label, srcmap, err)
     end
 
     return {
         run = fn(),
         env = env,
-        tags = tags,
+        srcmap = srcmap,
     }
 end
 
