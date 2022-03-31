@@ -79,7 +79,25 @@ local DISALLOWED_KEYWORDS = {
     ['while'] = true,
 }
 
+local BRACKET_OPEN = {
+    ['['] = ']',
+    ['{'] = '}',
+    ['('] = ')',
+}
+
+local BRACKET_CLOSE = {
+    [']'] = '[',
+    ['}'] = '{',
+    [')'] = '(',
+}
+
 local BACKSLASH = byte('\\')
+
+local SPACES = {
+    [' '] = ' ',
+    ['\n'] = '\n',
+    ['\t'] = '\t',
+}
 
 --- tokenize
 --- @param expr string
@@ -87,6 +105,7 @@ local BACKSLASH = byte('\\')
 --- @return string err
 local function tokenize(expr)
     local token = {}
+    local brackets = {}
     local pos = 1
     local head, tail = find(expr, '[^_%w]', pos)
 
@@ -158,16 +177,36 @@ local function tokenize(expr)
             end
 
             if not phead then
-                return nil, format('literal token is not closed by %q', sym)
+                return nil,
+                       format('literal token is not closed by %q', pair_sym)
             end
             tail = ptail
             token[#token + 1] = sub(expr, head, tail)
+        elseif SPACES[sym] then
+            -- ignore multiple space token
+            if token[#token] ~= sym then
+                token[#token + 1] = sym
+            end
         else
+            if BRACKET_OPEN[sym] then
+                brackets[#brackets + 1] = sym
+            elseif BRACKET_CLOSE[sym] then
+                if brackets[#brackets] ~= BRACKET_CLOSE[sym] then
+                    return nil, format('illegal bracket token %q', sym)
+                end
+                brackets[#brackets] = nil
+            end
             token[#token + 1] = sym
         end
 
         pos = tail + 1
         head, tail = find(expr, '[^_%w]', pos)
+    end
+
+    if #brackets > 0 then
+        local sym = brackets[#brackets]
+        return nil, format('bracket token %q is not closed by %q', sym,
+                           BRACKET_OPEN[sym])
     end
 
     if pos <= #expr then
@@ -313,7 +352,7 @@ local function parse_op(tag_suffix, tag, txt, op_head)
     local op_tail = find(txt, '[^a-z]', op_head + skip)
     if not op_tail then
         return nil,
-               format("invalid tag at %d:%d: not closed by '%s'", tag.lineno,
+               format("invalid tag at %d:%d: not closed by %q", tag.lineno,
                       tag.linecol, sub(tag_suffix, #tag_suffix - 1))
     elseif not op then
         op = sub(txt, op_head, op_tail - (op_tail > op_head and 1 or 0))
