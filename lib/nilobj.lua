@@ -19,6 +19,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
+local getmetatable = debug.getmetatable
 local setmetatable = debug.setmetatable
 
 local function newindex()
@@ -44,14 +45,18 @@ local NIL_MT = {
     __concat = concat,
 };
 
--- enable the nil object
+--- enable the nil object
+--- @return table metatable
 local function enable()
+    local mt = getmetatable(nil)
     setmetatable(nil, NIL_MT)
+    return mt
 end
 
--- disable the nil object
-local function disable()
-    setmetatable(nil, nil)
+--- disable the nil object
+--- @param mt table
+local function disable(mt)
+    setmetatable(nil, mt)
 end
 
 return {
