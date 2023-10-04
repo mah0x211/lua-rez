@@ -19,14 +19,15 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
-local error = error
 local format = string.format
 local next = next
 local getmetatable = debug.getmetatable
 local setmetatable = setmetatable
+local tostring = tostring
 local type = type
 local pairs = pairs
 local pcall = pcall
+local fatalf = require('error').fatalf
 local compile = require('rez.compile')
 local newfenv = require('rez.newfenv')
 local parse = require('rez.parse')
@@ -56,7 +57,7 @@ end
 
 --- default_loader
 --- @return boolean ok
---- @return string err
+--- @return any err
 local function DEFAULT_LOADER()
     return false
 end
@@ -74,7 +75,7 @@ local function render(rez, name)
         if ok then
             target = rez.tmpl[name]
         elseif err then
-            error(format('cannot load template %q %s', name, err), 2)
+            fatalf(2, 'cannot load template %q: %s', name, err)
         end
 
         if not target then
@@ -85,7 +86,7 @@ local function render(rez, name)
     -- prevent recursive rendering
     local callstack = rez.callstack
     if callstack[name] then
-        error(format('cannot render template %q recursively', name), 3)
+        fatalf(3, 'cannot render template %q recursively', name)
     end
 
     -- create context
@@ -124,7 +125,7 @@ end
 --- @return string
 local function rez_render(rez, name)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     end
 
     local res, err = render(rez, name)
@@ -137,16 +138,16 @@ end
 --- @param varname string
 local function rez_layout(rez, name, varname)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     elseif type(varname) ~= 'string' then
-        error('varname must be string', 2)
+        fatalf(2, 'varname must be string')
     elseif not rez.tmpl[name] then
         local ok, err = rez.loader(rez, name)
         if not ok then
             if err then
-                error(format('cannot apply layout %q %s', name, err), 2)
+                fatalf(2, 'cannot apply layout %q %s', name, err)
             else
-                error(format('layout template %q not found', name), 2)
+                fatalf(2, 'layout template %q not found', name)
             end
         end
     end
@@ -154,13 +155,13 @@ local function rez_layout(rez, name, varname)
     -- prevent recursive rendering
     local callstack = rez.callstack
     if callstack[name] then
-        error(format('cannot apply layout %q recursively', name), 2)
+        fatalf(2, 'cannot apply layout %q recursively', name)
     end
 
     -- get current context
     local ctx = callstack[callstack[#callstack]]
     if ctx.layout then
-        error('layout cannot be applied twice', 2)
+        fatalf(2, 'layout cannot be applied twice')
     end
     -- add layout info
     ctx.layout = {
@@ -171,7 +172,7 @@ end
 
 --- table_copy
 --- @param tbl table
---- @return table|nil
+--- @return table?
 local function table_copy(tbl)
     local newtbl = {}
 
@@ -238,9 +239,9 @@ Rez.__index = Rez
 --- @return string err
 function Rez:render(name, data)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     elseif data ~= nil and type(data) ~= 'table' then
-        error('data must be table', 2)
+        fatalf(2, 'data must be table')
     end
 
     self.callstack = {}
@@ -268,7 +269,7 @@ end
 --- @return boolean ok
 function Rez:del(name)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     elseif not self.tmpl[name] then
         return false
     end
@@ -283,7 +284,7 @@ end
 --- @return boolean ok
 function Rez:exists(name)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     end
     return self.tmpl[name] ~= nil
 end
@@ -292,23 +293,24 @@ end
 --- @param name string
 --- @param str string
 --- @return boolean ok
---- @return string err
+--- @return any err
 function Rez:add(name, str)
     if type(name) ~= 'string' then
-        error('name must be string', 2)
+        fatalf(2, 'name must be string')
     elseif type(str) ~= 'string' then
-        error('str must be string', 2)
+        fatalf(2, 'str must be string')
     end
 
     local tags, err = parse(str, self.curly)
     if err then
-        return false, err
+        return false,
+               format('failed to parse %q template: %s', name, tostring(err))
     end
 
     -- compile
     local tmpl, cerr = compile(name, tags, new_env(self))
     if cerr then
-        return false, cerr
+        return false, format('failed to compile %q template: %s', name, cerr)
     end
     self.tmpl[name] = tmpl
 
@@ -322,15 +324,15 @@ local function new(opts)
     opts = opts or {}
     -- check arguments
     if type(opts) ~= 'table' then
-        error('opts must be table', 2)
+        fatalf(2, 'opts must be table')
     elseif opts.env ~= nil and type(opts.env) ~= 'table' then
-        error('opts.env must be table', 2)
+        fatalf(2, 'opts.env must be table')
     elseif opts.curly ~= nil and type(opts.curly) ~= 'boolean' then
-        error('opts.curly must be boolean', 2)
+        fatalf(2, 'opts.curly must be boolean')
     elseif opts.escape ~= nil and not is_callable(opts.escape) then
-        error('opts.escape must be callable value', 2)
+        fatalf(2, 'opts.escape must be callable value')
     elseif opts.loader ~= nil and not is_callable(opts.loader) then
-        error('opts.loader must be callable value', 2)
+        fatalf(2, 'opts.loader must be callable value')
     end
 
     return setmetatable({
