@@ -1,16 +1,17 @@
 package = "rez"
 version = "scm-1"
 source = {
-    url = "git+https://github.com/mah0x211/lua-rez.git"
+    url = "git+https://github.com/mah0x211/lua-rez.git",
 }
 description = {
     summary = "A simple template engine for lua.",
     homepage = "https://github.com/mah0x211/lua-rez",
     license = "MIT/X11",
-    maintainer = "Masatoshi Fukunaga"
+    maintainer = "Masatoshi Fukunaga",
 }
 dependencies = {
     "lua >= 5.1",
+    "error >= 0.12.0",
     "dump >= 0.1.1",
     "loadchunk >= 0.1.2",
 }

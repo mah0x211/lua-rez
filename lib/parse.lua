@@ -19,7 +19,6 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
-local error = error
 local type = type
 local byte = string.byte
 local find = string.find
@@ -27,6 +26,7 @@ local format = string.format
 local gsub = string.gsub
 local sub = string.sub
 local match = string.match
+local fatalf = require('error').fatalf
 
 --- trim
 --- @param str string
@@ -400,9 +400,9 @@ local ESCAPE_TEXT_EXPR = {
 --- @return string err
 local function parse(txt, curly)
     if type(txt) ~= 'string' then
-        error('txt must be string', 2)
+        fatalf(2, 'txt must be string')
     elseif curly ~= nil and type(curly) ~= 'boolean' then
-        error('curly must be boolean', 2)
+        fatalf(2, 'curly must be boolean')
     end
 
     local prefix = '%-?%s*/*'
