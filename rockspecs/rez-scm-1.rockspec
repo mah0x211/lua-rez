@@ -1,3 +1,4 @@
+rockspec_format = "3.0"
 package = "rez"
 version = "scm-1"
 source = {
@@ -15,10 +16,23 @@ dependencies = {
     "dump >= 0.1.1",
     "loadchunk >= 0.1.2",
 }
+build_dependencies = {
+    "luarocks-build-hooks >= 0.8.0",
+}
 build = {
-    type = "builtin",
+    type = "hooks",
+    before_build = "$(extra-vars)",
+    extra_variables = {
+        CFLAGS = "-Wall -Wno-trigraphs -Wmissing-field-initializers -Wreturn-type -Wmissing-braces -Wparentheses -Wno-switch -Wunused-function -Wunused-label -Wunused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wunknown-pragmas -Wshadow -Wsign-compare",
+    },
+    conditional_variables = {
+        REZ_COVERAGE = {
+            CFLAGS = "--coverage",
+            LIBFLAG = "--coverage",
+        },
+    },
     modules = {
-        rez = "rez.lua",
+        ["rez"] = "rez.lua",
         ["rez.compile"] = "lib/compile.lua",
         ["rez.errmap"] = "lib/errmap.lua",
         ["rez.newfenv"] = "lib/newfenv.lua",
@@ -26,11 +40,14 @@ build = {
         ["rez.parse"] = "lib/parse.lua",
         ["rez.seal"] = "lib/seal.lua",
         ["rez.concat"] = {
-            sources = { "src/concat.c" }
+            sources = {
+                "src/concat.c",
+            },
         },
         ["rez.escape"] = {
-            sources = { "src/escape.c" }
+            sources = {
+                "src/escape.c",
+            },
         },
-    }
+    },
 }
-
