@@ -23,8 +23,8 @@
 #ifndef rez_h
 #define rez_h
 
+// lua
 #include <lauxlib.h>
-#include <lua.h>
 
 #if LUA_VERSION_NUM >= 502
 # define rawlen(L, idx) lua_rawlen(L, idx)
